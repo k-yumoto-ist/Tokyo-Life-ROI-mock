@@ -64,10 +64,11 @@ export default function App() {
       {step === "profile" && (
         <TimeValueSetup
           profile={profile}
-          timeValue={calculatedTimeValue}
+          timeValue={timeValue}
           onIncome={updateIncome}
           onProfile={updateProfile}
           onCustomIncome={(value) => updateProfile("annualIncome", value)}
+          onPresetTimeValue={setManualTimeValue}
           onNext={() => setStep("scenario")}
         />
       )}
@@ -104,7 +105,7 @@ export default function App() {
 function Header({ step, setStep }: { step: Step; setStep: (step: Step) => void }) {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/88 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-5 lg:py-4">
         <button className="flex items-center gap-3 text-left" onClick={() => setStep("hero")}>
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-night text-white shadow-glow sm:h-10 sm:w-10">
             <LineChart size={21} />
@@ -114,8 +115,8 @@ function Header({ step, setStep }: { step: Step; setStep: (step: Step) => void }
             <span className="hidden text-sm text-slate-500 sm:block">最安ではなく、あなたにとっての最適へ。</span>
           </span>
         </button>
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-night md:hidden">
-          {step === "hero" ? "コンセプト" : steps.find((item) => item.id === step)?.label ?? "比較"}
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-2 py-1.5 text-xs font-black text-night md:hidden">
+          {step === "hero" ? "Top" : step === "profile" ? "1/4 設定" : step === "scenario" ? "2/4 シーン" : "3/4 比較"}
         </div>
         <nav className="hidden grid-cols-2 gap-2 md:grid lg:flex">
           {steps.map((item, index) => (
@@ -139,36 +140,40 @@ function Header({ step, setStep }: { step: Step; setStep: (step: Step) => void }
 
 function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) {
   return (
-    <main className="relative overflow-hidden">
+    <main className="relative min-h-[100dvh] overflow-hidden">
       <section className="hero-scene">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-5 sm:py-12 lg:grid-cols-[1.03fr_0.97fr] lg:items-center lg:py-20">
+        <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-5 sm:py-12 lg:grid-cols-[1.03fr_0.97fr] lg:items-center lg:py-20">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-2 text-sm font-bold text-night shadow-sm sm:mb-5 sm:px-4">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-2 text-xs font-bold text-night shadow-sm sm:mb-5 sm:px-4 sm:text-sm">
               <Sparkles size={16} className="text-aqua" />
               価格だけでは見えない、東京生活の実質コスト。
             </div>
             <h1 className="max-w-4xl text-[42px] font-black leading-[1.04] tracking-normal text-night sm:text-5xl md:text-7xl">
               Tokyo Life ROI
             </h1>
-            <p className="mt-4 max-w-3xl text-xl font-bold leading-relaxed text-slate-800 sm:mt-5 sm:text-2xl md:text-3xl">
-              東京生活の「最適な選択」を、あなたの時間価値で可視化する。
+            <p className="mt-3 max-w-3xl text-xl font-bold leading-snug text-slate-800 sm:mt-5 sm:text-2xl sm:leading-relaxed md:text-3xl">
+              あなたの時間価値で、東京生活の最適解を選ぶ。
             </p>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:mt-5 sm:text-lg sm:leading-8">
+            <p className="mt-4 hidden max-w-2xl text-base leading-7 text-slate-600 sm:mt-5 sm:text-lg sm:leading-8 md:block">
               価格・時間・移動・混雑・疲労・手戻りリスクを統合し、都民と東京で働く人の意思決定を支援します。
             </p>
-            <div className="mt-6 rounded-xl border-l-4 border-signal bg-white/86 p-4 text-xl font-black leading-snug text-night shadow-sm sm:mt-8 sm:p-5 sm:text-2xl">
+            <div className="mt-4 rounded-xl border-l-4 border-signal bg-white/86 p-3 text-lg font-black leading-snug text-night shadow-sm sm:mt-8 sm:p-5 sm:text-2xl">
               同じ500円、同じ30分。でも価値は人によって違う。
             </div>
-            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
+            <div className="mt-4 flex flex-col gap-2 sm:mt-8 sm:flex-row">
               <button className="primary-button" onClick={onStart}>
                 デモを始める <ArrowRight size={18} />
               </button>
-              <button className="secondary-button" onClick={onJump}>
+              <button className="secondary-button hidden sm:inline-flex" onClick={onJump}>
                 Life ROIを見る <LineChart size={18} />
               </button>
             </div>
+            <details className="mt-3 rounded-lg border border-slate-200 bg-white/80 p-3 text-sm text-slate-600 md:hidden">
+              <summary className="cursor-pointer font-black text-night">詳しく見る</summary>
+              <p className="mt-2 leading-6">価格・時間・移動・混雑・疲労・手戻りリスクを統合し、都民と東京で働く人の意思決定を支援します。</p>
+            </details>
           </div>
-          <div className="dashboard-preview" aria-label="Tokyo Life ROI dashboard preview">
+          <div className="dashboard-preview hidden md:block" aria-label="Tokyo Life ROI dashboard preview">
             <div className="preview-topline">
               <span>Life ROI DEMO</span>
               <span>Tokyo / 18:40</span>
@@ -192,7 +197,7 @@ function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) 
           </div>
         </div>
       </section>
-      <section className="mx-auto grid max-w-7xl gap-4 px-4 pb-10 sm:px-5 sm:pb-14 md:-mt-4 md:grid-cols-3">
+      <section className="mobile-value-strip mx-auto grid max-w-7xl grid-cols-3 gap-2 px-4 pb-5 sm:px-5 sm:pb-14 md:-mt-4 md:grid-cols-3 md:gap-4">
         {[
           ["価格だけでなく時間も比較", "支払額・移動・待ち時間を同じ軸に置き、実質生活コストを可視化します。", Clock],
           ["あなたの時間価値でパーソナライズ", "忙しさや家族状況に応じて、1時間を取り戻す価値を調整します。", Settings2],
@@ -215,6 +220,7 @@ function TimeValueSetup({
   onIncome,
   onProfile,
   onCustomIncome,
+  onPresetTimeValue,
   onNext
 }: {
   profile: UserProfile;
@@ -222,11 +228,56 @@ function TimeValueSetup({
   onIncome: (preset: IncomePreset) => void;
   onProfile: <T extends keyof UserProfile>(key: T, value: UserProfile[T]) => void;
   onCustomIncome: (value: number) => void;
+  onPresetTimeValue: (value: number | null) => void;
   onNext: () => void;
 }) {
+  const timeModes = [
+    { label: "ゆとり", value: 1000 },
+    { label: "標準", value: 2000 },
+    { label: "多忙", value: 3500 },
+    { label: "超多忙", value: 5000 }
+  ];
+
   return (
-    <main className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-5 sm:py-10 lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="panel p-5 sm:p-7">
+    <main className="mx-auto grid min-h-[calc(100dvh-58px)] max-w-7xl gap-4 px-4 py-4 sm:px-5 sm:py-10 lg:grid-cols-[0.95fr_1.05fr]">
+      <section className="panel mobile-profile-card p-4 md:hidden">
+        <p className="section-kicker">Time Value</p>
+        <h1 className="text-2xl font-black leading-tight text-night">あなたの時間価値</h1>
+        <div className="mt-3 rounded-xl bg-night p-4 text-white">
+          <span className="text-xs font-bold text-cyan-100">現在の推定</span>
+          <div className="mt-1 text-4xl font-black leading-tight">{formatYen(timeValue)} / 時間</div>
+          <div className="mt-1 text-sm font-semibold text-cyan-100">30分：約{formatYen(Math.round(timeValue / 2))}</div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {timeModes.map((mode) => (
+            <button
+              key={mode.label}
+              className={`choice-button ${Math.abs(timeValue - mode.value) < 100 ? "is-active" : ""}`}
+              onClick={() => onPresetTimeValue(mode.value)}
+            >
+              <span className="block text-sm">{mode.label}モード</span>
+              <span className="block text-xs font-bold text-slate-500">{formatYen(mode.value)} / h</span>
+            </button>
+          ))}
+        </div>
+        <details className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+          <summary className="cursor-pointer text-sm font-black text-night">詳細設定</summary>
+          <div className="mt-3">
+            <ProfileFields
+              profile={profile}
+              onIncome={onIncome}
+              onProfile={onProfile}
+              onCustomIncome={onCustomIncome}
+              onAnyChange={() => onPresetTimeValue(null)}
+            />
+          </div>
+        </details>
+        <button className="primary-button mt-3 w-full justify-center" onClick={onNext}>
+          シーンを選ぶ <ArrowRight size={18} />
+        </button>
+      </section>
+
+      <section className="panel hidden p-5 sm:p-7 md:block">
         <p className="section-kicker">Time Value</p>
         <h1 className="section-title">あなたが1時間を取り戻すために払ってもよい金額</h1>
         <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
@@ -241,54 +292,8 @@ function TimeValueSetup({
           シーンを選ぶ <ArrowRight size={18} />
         </button>
       </section>
-      <section className="panel p-5 sm:p-7">
-        <FormBlock title="年収レンジ">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-            {incomePresets.map((item) => (
-              <button
-                key={item.label}
-                className={`choice-button ${profile.incomePreset === item.value ? "is-active" : ""}`}
-                onClick={() => onIncome(item.value)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          {profile.incomePreset === "custom" && (
-            <label className="mt-3 block">
-              <span className="text-sm font-bold text-slate-500">自由入力（円）</span>
-              <input
-                className="mt-1 w-full rounded-lg border border-slate-200 px-4 py-3 text-lg font-bold outline-none focus:border-aqua"
-                type="number"
-                min={1000000}
-                step={100000}
-                value={profile.annualIncome}
-                onChange={(event) => onCustomIncome(Number(event.target.value))}
-              />
-            </label>
-          )}
-        </FormBlock>
-        <FormBlock title="1週間の自由時間">
-          <Segmented
-            values={["少ない", "普通", "多い"]}
-            active={profile.freeTime}
-            onChange={(value) => onProfile("freeTime", value as FreeTime)}
-          />
-        </FormBlock>
-        <FormBlock title="今日の忙しさ">
-          <Segmented
-            values={["余裕あり", "普通", "忙しい", "とても忙しい"]}
-            active={profile.busyness}
-            onChange={(value) => onProfile("busyness", value as Busyness)}
-          />
-        </FormBlock>
-        <FormBlock title="家族状況">
-          <Segmented
-            values={["一人暮らし", "夫婦", "子育て中", "介護あり"]}
-            active={profile.familyStatus}
-            onChange={(value) => onProfile("familyStatus", value as FamilyStatus)}
-          />
-        </FormBlock>
+      <section className="panel hidden p-5 sm:p-7 md:block">
+        <ProfileFields profile={profile} onIncome={onIncome} onProfile={onProfile} onCustomIncome={onCustomIncome} />
       </section>
     </main>
   );
@@ -296,17 +301,17 @@ function TimeValueSetup({
 
 function ScenarioSelector({ activeScenario, onSelect }: { activeScenario: Scenario; onSelect: (scenario: Scenario) => void }) {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-5 sm:py-10">
-      <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <main className="mx-auto min-h-[calc(100dvh-58px)] max-w-7xl px-4 py-4 sm:px-5 sm:py-10">
+      <div className="mb-4 flex flex-col justify-between gap-3 md:mb-8 md:flex-row md:items-end">
         <div>
           <p className="section-kicker">Scenario</p>
           <h1 className="section-title">東京には選択肢が多い。だからこそ、選ぶ時間を減らす。</h1>
         </div>
-        <p className="max-w-xl text-lg leading-8 text-slate-600">
+        <p className="hidden max-w-xl text-lg leading-8 text-slate-600 md:block">
           今回のメインデモは買い物です。他の生活シーンも同じLife ROI軸で比較できます。
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-5 xl:grid-cols-4">
         {scenarios.map((scenario) => (
           <button
             key={scenario.id}
@@ -314,9 +319,9 @@ function ScenarioSelector({ activeScenario, onSelect }: { activeScenario: Scenar
             className={`scenario-card ${activeScenario.id === scenario.id ? "is-active" : ""}`}
           >
             <ScenarioIcon scenario={scenario} />
-            <span className="mt-5 block text-2xl font-black text-night">{scenario.title}</span>
-            <span className="mt-3 block text-left text-base leading-7 text-slate-600">{scenario.description}</span>
-            <span className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-cyan-50 px-3 text-sm font-black text-aqua">
+            <span className="mt-3 block text-xl font-black text-night md:mt-5 md:text-2xl">{scenario.title}</span>
+            <span className="mt-1 block truncate text-left text-sm leading-6 text-slate-600 md:mt-3 md:text-base md:leading-7">{scenario.description}</span>
+            <span className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-50 px-3 text-sm font-black text-aqua md:mt-6 md:min-h-11">
               比較する <ArrowRight size={16} />
             </span>
           </button>
@@ -331,6 +336,87 @@ function ScenarioIcon({ scenario }: { scenario: Scenario }) {
     <span className="grid h-12 w-12 place-items-center rounded-lg bg-night text-white">
       <Layers size={22} />
     </span>
+  );
+}
+
+function ProfileFields({
+  profile,
+  onIncome,
+  onProfile,
+  onCustomIncome,
+  onAnyChange
+}: {
+  profile: UserProfile;
+  onIncome: (preset: IncomePreset) => void;
+  onProfile: <T extends keyof UserProfile>(key: T, value: UserProfile[T]) => void;
+  onCustomIncome: (value: number) => void;
+  onAnyChange?: () => void;
+}) {
+  function handleIncome(preset: IncomePreset) {
+    onAnyChange?.();
+    onIncome(preset);
+  }
+
+  function handleProfile<T extends keyof UserProfile>(key: T, value: UserProfile[T]) {
+    onAnyChange?.();
+    onProfile(key, value);
+  }
+
+  function handleCustomIncome(value: number) {
+    onAnyChange?.();
+    onCustomIncome(value);
+  }
+
+  return (
+    <>
+      <FormBlock title="年収レンジ">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+          {incomePresets.map((item) => (
+            <button
+              key={item.label}
+              className={`choice-button ${profile.incomePreset === item.value ? "is-active" : ""}`}
+              onClick={() => handleIncome(item.value)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        {profile.incomePreset === "custom" && (
+          <label className="mt-3 block">
+            <span className="text-sm font-bold text-slate-500">自由入力（円）</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-200 px-4 py-3 text-lg font-bold outline-none focus:border-aqua"
+              type="number"
+              min={1000000}
+              step={100000}
+              value={profile.annualIncome}
+              onChange={(event) => handleCustomIncome(Number(event.target.value))}
+            />
+          </label>
+        )}
+      </FormBlock>
+      <FormBlock title="1週間の自由時間">
+        <Segmented
+          values={["少ない", "普通", "多い"]}
+          active={profile.freeTime}
+          onChange={(value) => handleProfile("freeTime", value as FreeTime)}
+        />
+      </FormBlock>
+      <FormBlock title="今日の忙しさ">
+        <Segmented
+          values={["余裕あり", "普通", "忙しい", "とても忙しい"]}
+          active={profile.busyness}
+          onChange={(value) => handleProfile("busyness", value as Busyness)}
+        />
+      </FormBlock>
+      <FormBlock title="家族状況">
+        <Segmented
+          values={["一人暮らし", "夫婦", "子育て中", "介護あり"]}
+          active={profile.familyStatus}
+          onChange={(value) => handleProfile("familyStatus", value as FamilyStatus)}
+        />
+      </FormBlock>
+    </>
   );
 }
 

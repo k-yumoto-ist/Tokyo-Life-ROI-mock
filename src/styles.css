@@ -256,6 +256,47 @@ button {
   min-height: auto;
 }
 
+.mobile-decision-screen {
+  display: flex;
+  min-height: calc(100dvh - 58px);
+  flex-direction: column;
+  padding: 12px 14px calc(82px + env(safe-area-inset-bottom));
+}
+
+.mobile-decision-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(203, 213, 225, 0.78);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.97);
+  padding: 14px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.07);
+}
+
+.mobile-action-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border-top: 1px solid rgba(203, 213, 225, 0.9);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  backdrop-filter: blur(12px);
+}
+
+.mobile-action-bar .primary-button,
+.mobile-action-bar .secondary-button {
+  min-height: 48px;
+  width: 100%;
+  padding: 10px 12px;
+}
+
 .choice-button {
   min-height: 44px;
   border: 1px solid #d6dee9;
@@ -426,7 +467,7 @@ button {
   }
 
   .hero-scene {
-    min-height: auto;
+    min-height: calc(100dvh - 60px);
   }
 
   .dashboard-preview {
@@ -465,7 +506,26 @@ button {
   }
 
   .feature-card {
-    padding: 20px;
+    padding: 12px;
+  }
+
+  .mobile-value-strip .feature-card {
+    min-height: 72px;
+  }
+
+  .mobile-value-strip .feature-card svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-value-strip .feature-card h2 {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .mobile-value-strip .feature-card p {
+    display: none;
   }
 
   .primary-button,
@@ -492,7 +552,7 @@ button {
 
   .scenario-card {
     min-height: auto;
-    padding: 20px;
+    padding: 14px;
   }
 
   .recommend-card {
