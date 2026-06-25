@@ -15,6 +15,13 @@ export type UserProfile = {
 
 export type ScenarioId = "shopping" | "admin" | "mobility" | "family";
 
+export type UrbanImpact = {
+  congestionAvoidance: number;
+  alternativeUse: number;
+  travelReduction: number;
+  score: number;
+};
+
 export type LifeOption = {
   id: string;
   name: string;
@@ -29,7 +36,9 @@ export type LifeOption = {
   risk: "低" | "中" | "高";
   fatigueBaseCost: number;
   riskBaseCost: number;
+  congestionBaseCost: number;
   benefitBonus: number;
+  urbanImpact: UrbanImpact;
   facts: string[];
   reason: string;
   caution: string;
@@ -50,6 +59,8 @@ export type ScoredOption = LifeOption & {
   timeCost: number;
   fatigueCost: number;
   riskCost: number;
+  congestionCost: number;
+  urbanDistributionBonus: number;
   actualCost: number;
   lifeRoiScore: number;
 };

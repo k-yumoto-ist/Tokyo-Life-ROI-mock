@@ -467,7 +467,7 @@ button {
   }
 
   .hero-scene {
-    min-height: calc(100dvh - 60px);
+    min-height: auto;
   }
 
   .dashboard-preview {

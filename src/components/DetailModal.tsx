@@ -10,7 +10,8 @@ export function DetailModal({ option, scenario, onClose }: { option: ScoredOptio
     ["作業時間", `${option.workMinutes}分`],
     ["時間コスト", formatYen(option.timeCost)],
     ["疲労補正", formatYen(option.fatigueCost)],
-    ["リスク補正", formatYen(option.riskCost)]
+    ["リスク補正", formatYen(option.riskCost)],
+    ["混雑補正", formatYen(option.congestionCost)]
   ];
 
   return (
@@ -35,6 +36,10 @@ export function DetailModal({ option, scenario, onClose }: { option: ScoredOptio
             <div className="mt-2 text-5xl font-black sm:text-6xl">{option.lifeRoiScore}</div>
             <div className="mt-4 text-cyan-100">実質生活コスト</div>
             <div className="text-2xl font-black">{formatYen(option.actualCost)}</div>
+            <div className="mt-5 rounded-lg bg-white/10 p-3">
+              <div className="text-sm font-black text-cyan-100">都市分散効果</div>
+              <div className="mt-1 text-3xl font-black">{option.urbanImpact.score}</div>
+            </div>
           </div>
           <div className="grid gap-5">
             <section className="detail-section">
@@ -48,6 +53,24 @@ export function DetailModal({ option, scenario, onClose }: { option: ScoredOptio
                   <div className="mt-1 text-xl font-black text-night">{value}</div>
                 </div>
               ))}
+            </section>
+            <section className="detail-section">
+              <h3>都市分散効果</h3>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[
+                  ["混雑回避", option.urbanImpact.congestionAvoidance],
+                  ["代替候補活用", option.urbanImpact.alternativeUse],
+                  ["移動削減", option.urbanImpact.travelReduction]
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-lg bg-cyan-50 p-3 text-center">
+                    <div className="text-xs font-bold text-slate-500">{label}</div>
+                    <div className="mt-1 text-2xl font-black text-night">{value}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                個人にとって合理的な選択を優先し、その結果として混雑回避、代替候補の活用、不要な移動の削減につながる度合いです。
+              </p>
             </section>
             <section className="grid gap-4 md:grid-cols-2">
               <div className="detail-section">

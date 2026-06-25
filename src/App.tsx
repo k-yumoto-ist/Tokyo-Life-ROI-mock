@@ -38,7 +38,11 @@ export default function App() {
 
   const calculatedTimeValue = useMemo(() => calculateTimeValue(profile), [profile]);
   const timeValue = manualTimeValue ?? calculatedTimeValue;
-  const activeScenario = scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0];
+  const orderedScenarios = useMemo(() => {
+    const order: ScenarioId[] = ["shopping", "mobility", "admin", "family"];
+    return [...scenarios].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  }, []);
+  const activeScenario = orderedScenarios.find((scenario) => scenario.id === scenarioId) ?? orderedScenarios[0];
   const scoredOptions = useMemo(() => scoreOptions(activeScenario.options, timeValue), [activeScenario, timeValue]);
   const recommended = scoredOptions[0];
 
@@ -74,6 +78,7 @@ export default function App() {
       )}
       {step === "scenario" && (
         <ScenarioSelector
+          availableScenarios={orderedScenarios}
           activeScenario={activeScenario}
           onSelect={(scenario) => {
             setScenarioId(scenario.id);
@@ -84,7 +89,7 @@ export default function App() {
       {step === "comparison" && (
         <ComparisonDashboard
           scenario={activeScenario}
-          scenarios={scenarios}
+          scenarios={orderedScenarios}
           timeValue={timeValue}
           calculatedTimeValue={calculatedTimeValue}
           scoredOptions={scoredOptions}
@@ -146,16 +151,16 @@ function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) 
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-2 text-xs font-bold text-night shadow-sm sm:mb-5 sm:px-4 sm:text-sm">
               <Sparkles size={16} className="text-aqua" />
-              価格だけでは見えない、東京生活の実質コスト。
+              最安ではなく、あなたにとっての最適へ。
             </div>
             <h1 className="max-w-4xl text-[42px] font-black leading-[1.04] tracking-normal text-night sm:text-5xl md:text-7xl">
               Tokyo Life ROI
             </h1>
             <p className="mt-3 max-w-3xl text-xl font-bold leading-snug text-slate-800 sm:mt-5 sm:text-2xl sm:leading-relaxed md:text-3xl">
-              あなたの時間価値で、東京生活の最適解を選ぶ。
+              個人の最適が、東京全体の快適につながる。
             </p>
             <p className="mt-4 hidden max-w-2xl text-base leading-7 text-slate-600 sm:mt-5 sm:text-lg sm:leading-8 md:block">
-              価格・時間・移動・混雑・疲労・手戻りリスクを統合し、都民と東京で働く人の意思決定を支援します。
+              価格・時間・移動・混雑・疲労・リスクを統合し、東京で暮らす人・働く人の納得ある選択を支援します。
             </p>
             <div className="mt-4 rounded-xl border-l-4 border-signal bg-white/86 p-3 text-lg font-black leading-snug text-night shadow-sm sm:mt-8 sm:p-5 sm:text-2xl">
               同じ500円、同じ30分。でも価値は人によって違う。
@@ -170,7 +175,9 @@ function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) 
             </div>
             <details className="mt-3 rounded-lg border border-slate-200 bg-white/80 p-3 text-sm text-slate-600 md:hidden">
               <summary className="cursor-pointer font-black text-night">詳しく見る</summary>
-              <p className="mt-2 leading-6">価格・時間・移動・混雑・疲労・手戻りリスクを統合し、都民と東京で働く人の意思決定を支援します。</p>
+              <p className="mt-2 leading-6">
+                価格・時間・混雑などを統合し、空いている代替候補も提示します。あなたにとって合理的な選択が、自然な行動分散にもつながります。
+              </p>
             </details>
           </div>
           <div className="dashboard-preview hidden md:block" aria-label="Tokyo Life ROI dashboard preview">
@@ -180,8 +187,8 @@ function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) 
             </div>
             <div className="preview-score">
               <span>推奨</span>
-              <strong>まとめ買い配送</strong>
-              <b>91</b>
+              <strong>近隣の空いている店舗</strong>
+              <b>92</b>
             </div>
             <div className="preview-bars">
               <span style={{ width: "92%" }} />
@@ -199,9 +206,9 @@ function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) 
       </section>
       <section className="mobile-value-strip mx-auto grid max-w-7xl grid-cols-3 gap-2 px-4 pb-5 sm:px-5 sm:pb-14 md:-mt-4 md:grid-cols-3 md:gap-4">
         {[
-          ["価格だけでなく時間も比較", "支払額・移動・待ち時間を同じ軸に置き、実質生活コストを可視化します。", Clock],
-          ["あなたの時間価値でパーソナライズ", "忙しさや家族状況に応じて、1時間を取り戻す価値を調整します。", Settings2],
-          ["最安ではなく最適を提案", "混雑・疲労・手戻りリスクまで含め、納得できる理由を提示します。", BadgeCheck]
+          ["価格だけでなく時間も", "支払額・移動・待ち時間を同じ軸で比較します。", Clock],
+          ["空いている代替候補", "混雑を避けやすい選択の幅を広げます。", Settings2],
+          ["自然な行動分散", "個人の合理的な選択が東京の快適にもつながります。", BadgeCheck]
         ].map(([title, body, Icon]) => (
           <article key={String(title)} className="feature-card">
             <Icon className="text-aqua" size={24} />
@@ -210,6 +217,7 @@ function Hero({ onStart, onJump }: { onStart: () => void; onJump: () => void }) 
           </article>
         ))}
       </section>
+      <OpenDataSection />
     </main>
   );
 }
@@ -299,7 +307,15 @@ function TimeValueSetup({
   );
 }
 
-function ScenarioSelector({ activeScenario, onSelect }: { activeScenario: Scenario; onSelect: (scenario: Scenario) => void }) {
+function ScenarioSelector({
+  availableScenarios,
+  activeScenario,
+  onSelect
+}: {
+  availableScenarios: Scenario[];
+  activeScenario: Scenario;
+  onSelect: (scenario: Scenario) => void;
+}) {
   return (
     <main className="mx-auto min-h-[calc(100dvh-58px)] max-w-7xl px-4 py-4 sm:px-5 sm:py-10">
       <div className="mb-4 flex flex-col justify-between gap-3 md:mb-8 md:flex-row md:items-end">
@@ -312,7 +328,7 @@ function ScenarioSelector({ activeScenario, onSelect }: { activeScenario: Scenar
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3 md:gap-5 xl:grid-cols-4">
-        {scenarios.map((scenario) => (
+        {availableScenarios.map((scenario) => (
           <button
             key={scenario.id}
             onClick={() => onSelect(scenario)}
@@ -328,6 +344,57 @@ function ScenarioSelector({ activeScenario, onSelect }: { activeScenario: Scenar
         ))}
       </div>
     </main>
+  );
+}
+
+function OpenDataSection() {
+  const dataSources = [
+    ["東京都オープンデータカタログ", "公共施設・公園・子育て施設・AED等", "代替候補、安心度、公共資源活用"],
+    ["公共交通オープンデータ", "駅・時刻表・運行情報・バスロケーション", "移動時間、遅延、移動負荷"],
+    ["東京都区部 消費者物価指数", "食料・交通・日用品の物価動向", "物価高背景、生活コスト補正"],
+    ["区市町村の地域データ", "地域施設・子育て・防災関連データ", "生活圏内の候補提示、安心度"]
+  ];
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-5 md:pb-16">
+      <details className="rounded-xl border border-slate-200 bg-white p-4 md:hidden">
+        <summary className="cursor-pointer font-black text-night">活用予定のオープンデータ</summary>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          東京都や公共交通のオープンデータを活用し、施設・移動・物価・公共サービスを比較可能な選択肢として構造化する予定です。
+        </p>
+      </details>
+      <div className="hidden md:block">
+        <div className="mb-6 grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+          <div>
+            <p className="section-kicker">Open Data</p>
+            <h2 className="section-title">活用予定のオープンデータ</h2>
+          </div>
+          <p className="text-lg leading-8 text-slate-600">
+            東京都オープンデータカタログや公共交通オープンデータ等を活用し、東京の施設・移動・物価・公共サービスを比較可能な選択肢として構造化します。
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {dataSources.map(([title, data, use]) => (
+            <article key={title} className="panel p-5">
+              <span className="recommend-pill">活用予定</span>
+              <h3 className="mt-3 text-lg font-black text-night">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{data}</p>
+              <p className="mt-3 border-t border-slate-100 pt-3 text-sm font-bold leading-6 text-aqua">用途：{use}</p>
+            </article>
+          ))}
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <article className="panel p-5">
+            <h3 className="text-lg font-black text-night">この選択が東京にもたらす効果</h3>
+            <p className="mt-2 leading-7 text-slate-600">混雑しやすい場所への集中を避け、近隣の空いている資源を活用し、不要な移動や消費の偏りを自然に緩和します。</p>
+          </article>
+          <article className="panel p-5">
+            <h3 className="text-lg font-black text-night">既存サービスとの違い</h3>
+            <p className="mt-2 leading-7 text-slate-600">地図アプリは移動時間を、価格比較は支払額を出す。Tokyo Life ROI は、あなたにとって納得できる意思決定を提示します。</p>
+          </article>
+        </div>
+      </div>
+    </section>
   );
 }
 

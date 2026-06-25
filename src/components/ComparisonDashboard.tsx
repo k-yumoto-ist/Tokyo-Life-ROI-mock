@@ -46,6 +46,7 @@ export function ComparisonDashboard({
     支払額: option.paymentCost + (option.feeCost ?? 0),
     時間コスト: option.timeCost,
     疲労リスク: option.fatigueCost + option.riskCost,
+    混雑コスト: option.congestionCost,
     実質生活コスト: option.actualCost,
     score: option.lifeRoiScore
   }));
@@ -105,6 +106,15 @@ export function ComparisonDashboard({
               <p className="text-sm font-black uppercase tracking-[0.12em] text-cyan-100">Recommended</p>
               <h2 className="mt-2 text-4xl font-black tracking-normal">{recommended.name}</h2>
               <p className="mt-4 text-lg leading-8 text-cyan-50">{recommended.reason}</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <UrbanImpactBadge score={recommended.urbanImpact.score} inverted />
+                <span className="rounded-full bg-white/15 px-3 py-2 text-sm font-black">
+                  混雑回避 {recommended.urbanImpact.congestionAvoidance}
+                </span>
+                <span className="rounded-full bg-white/15 px-3 py-2 text-sm font-black">
+                  近隣資源活用 {recommended.urbanImpact.alternativeUse}
+                </span>
+              </div>
             </div>
             <div className="score-orb">
               <span>Life ROI</span>
@@ -126,7 +136,8 @@ export function ComparisonDashboard({
                   <Legend />
                   <Bar dataKey="支払額" stackId="a" fill="#15243a" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="時間コスト" stackId="a" fill="#00a8c8" />
-                  <Bar dataKey="疲労リスク" stackId="a" fill="#ffd166" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="疲労リスク" stackId="a" fill="#ffd166" />
+                  <Bar dataKey="混雑コスト" stackId="a" fill="#ef8354" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -148,7 +159,7 @@ export function ComparisonDashboard({
             <table className="w-full min-w-[880px] text-left">
               <thead className="bg-slate-50 text-sm text-slate-500">
                 <tr>
-                  {["選択肢", "Life ROI", "実質生活コスト", "支払額", "時間", "混雑", "疲労", "手戻り"].map((head) => (
+                  {["選択肢", "Life ROI", "都市分散効果", "実質生活コスト", "支払額", "時間", "混雑", "疲労", "手戻り"].map((head) => (
                     <th key={head} className="px-5 py-4 font-black">{head}</th>
                   ))}
                 </tr>
@@ -158,6 +169,7 @@ export function ComparisonDashboard({
                   <tr key={option.id} className="border-t border-slate-100">
                     <td className="px-5 py-4 font-black text-night">{option.name}</td>
                     <td className="px-5 py-4"><span className="table-score">{option.lifeRoiScore}</span></td>
+                    <td className="px-5 py-4"><UrbanImpactBadge score={option.urbanImpact.score} /></td>
                     <td className="px-5 py-4 font-bold">{formatYen(option.actualCost)}</td>
                     <td className="px-5 py-4">{formatYen(option.paymentCost + (option.feeCost ?? 0))}</td>
                     <td className="px-5 py-4">{option.totalMinutes}分</td>
@@ -227,8 +239,14 @@ function MobileDecisionDashboard({
               <strong className="text-5xl font-black leading-none text-signal">{recommended.lifeRoiScore}</strong>
             </div>
           </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <UrbanImpactBadge score={recommended.urbanImpact.score} inverted />
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-black text-cyan-50">
+              混雑回避 {recommended.urbanImpact.congestionAvoidance}
+            </span>
+          </div>
           <p className="mt-3 text-sm leading-6 text-cyan-50">
-            {shortReason(recommended.reason)}
+            {mobileReason(recommended)}
           </p>
           <button className="mt-2 text-sm font-black text-signal underline underline-offset-4" onClick={() => onOpenSheet("why")}>
             なぜこの結果？
@@ -342,6 +360,10 @@ function OptionCard({ option, isRecommended, onOpenDetail }: { option: ScoredOpt
         <Metric icon={<Clock3 size={18} />} label="時間コスト" value={formatYen(option.timeCost)} />
         <Metric icon={<ShieldCheck size={18} />} label="疲労・リスク" value={formatYen(option.fatigueCost + option.riskCost)} />
       </div>
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-cyan-50 p-3">
+        <UrbanImpactBadge score={option.urbanImpact.score} />
+        <span className="text-sm font-bold text-slate-600">混雑 {option.crowd}</span>
+      </div>
       <p className="mt-4 text-left text-sm leading-6 text-slate-600">{option.reason}</p>
       <span className="mt-5 flex items-center justify-end gap-1 text-sm font-black text-aqua">
         詳細を見る <ChevronRight size={15} />
@@ -395,8 +417,9 @@ function MobileBottomSheet({
                       <span className="font-black text-night">{option.name}</span>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">
-                      実質 {formatYen(option.actualCost)} / 時間 {option.totalMinutes}分
+                      実質 {formatYen(option.actualCost)} / 混雑 {option.crowd}
                     </p>
+                    <div className="mt-2"><UrbanImpactBadge score={option.urbanImpact.score} /></div>
                   </div>
                   <div className="mini-score">{option.lifeRoiScore}</div>
                 </div>
@@ -411,8 +434,14 @@ function MobileBottomSheet({
             <BreakdownRow label="時間コスト" value={formatYen(recommended.timeCost)} />
             <BreakdownRow label="疲労コスト" value={formatYen(recommended.fatigueCost)} />
             <BreakdownRow label="手戻りリスク" value={formatYen(recommended.riskCost)} />
+            <BreakdownRow label="混雑コスト" value={formatYen(recommended.congestionCost)} />
             <BreakdownRow label="移動・作業時間" value={`${recommended.totalMinutes}分`} />
             <BreakdownRow label="実質生活コスト" value={formatYen(recommended.actualCost)} strong />
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <ImpactMetric label="混雑回避" value={recommended.urbanImpact.congestionAvoidance} />
+              <ImpactMetric label="代替活用" value={recommended.urbanImpact.alternativeUse} />
+              <ImpactMetric label="移動削減" value={recommended.urbanImpact.travelReduction} />
+            </div>
           </div>
         )}
 
@@ -424,6 +453,9 @@ function MobileBottomSheet({
             <p className="text-base leading-7 text-slate-700">{recommended.reason}</p>
             <p className="text-sm leading-6 text-slate-500">
               時間価値が高くなるほど、移動・待ち時間・疲労が少ない選択肢が有利になります。スライダーを下げると、支払額の安い選択肢が上位に戻りやすくなります。
+            </p>
+            <p className="rounded-xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-800">
+              あなたにとって合理的であることを優先し、その結果として混雑しやすい場所への集中を避けやすくする提案です。
             </p>
           </div>
         )}
@@ -461,6 +493,26 @@ function CompactMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ImpactMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-cyan-50 p-2 text-center">
+      <span className="block text-[10px] font-black text-slate-500">{label}</span>
+      <strong className="text-lg font-black text-night">{value}</strong>
+    </div>
+  );
+}
+
+function UrbanImpactBadge({ score, inverted = false }: { score: number; inverted?: boolean }) {
+  const level = score >= 80 ? "高" : score >= 50 ? "中" : "低";
+  return (
+    <span className={`inline-flex rounded-full px-3 py-1.5 text-xs font-black ${
+      inverted ? "bg-white/15 text-white" : "bg-emerald-50 text-emerald-700"
+    }`}>
+      都市分散効果 {level}
+    </span>
+  );
+}
+
 function BreakdownRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className={`flex items-center justify-between gap-3 rounded-lg p-3 ${strong ? "bg-night text-white" : "bg-slate-50 text-night"}`}>
@@ -489,7 +541,9 @@ function Metric({
   );
 }
 
-function shortReason(reason: string) {
-  const firstSentence = reason.split("。")[0];
-  return `${firstSentence}ため、今日の条件では最も合理的です。`;
+function mobileReason(option: ScoredOption) {
+  if (option.urbanImpact.score >= 80) {
+    return "移動と混雑が少なく、今日のあなたには最も合理的です。混雑しやすい場所への集中を避ける選択にもなります。";
+  }
+  return option.reason.split("。")[0] + "。";
 }

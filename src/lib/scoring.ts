@@ -36,7 +36,13 @@ export function scoreOptions(options: LifeOption[], timeValuePerHour: number): S
     const timeCost = Math.round((totalMinutes / 60) * timeValuePerHour);
     const fatigueCost = Math.round(option.fatigueBaseCost * Math.max(0.75, timeValuePerHour / 2500));
     const riskCost = Math.round(option.riskBaseCost * Math.max(0.8, timeValuePerHour / 3000));
-    const actualCost = option.paymentCost + (option.feeCost ?? 0) + timeCost + fatigueCost + riskCost;
+    const congestionCost = Math.round(option.congestionBaseCost * Math.max(0.85, timeValuePerHour / 3200));
+    const actualCost = option.paymentCost + (option.feeCost ?? 0) + timeCost + fatigueCost + riskCost + congestionCost;
+    const urbanDistributionBonus = Math.round(
+      option.urbanImpact.congestionAvoidance * 0.08 +
+      option.urbanImpact.alternativeUse * 0.05 +
+      option.urbanImpact.travelReduction * 0.04
+    );
 
     return {
       ...option,
@@ -44,6 +50,8 @@ export function scoreOptions(options: LifeOption[], timeValuePerHour: number): S
       timeCost,
       fatigueCost,
       riskCost,
+      congestionCost,
+      urbanDistributionBonus,
       actualCost,
       lifeRoiScore: 0
     };
@@ -56,7 +64,9 @@ export function scoreOptions(options: LifeOption[], timeValuePerHour: number): S
   const maxPayment = Math.max(...payments);
   const range = Math.max(1, maxActual - minActual);
 
-  const priceSensitivity = 12 + ((9000 - Math.min(9000, Math.max(800, timeValuePerHour))) / 8200) * 85;
+  const normalizedPriceSensitivity =
+    (9000 - Math.min(9000, Math.max(800, timeValuePerHour))) / 8200;
+  const priceSensitivity = 12 + Math.pow(normalizedPriceSensitivity, 3) * 230;
 
   return enriched
     .map((option) => {
@@ -64,7 +74,11 @@ export function scoreOptions(options: LifeOption[], timeValuePerHour: number): S
       const normalizedActualCost = ((option.actualCost - minActual) / range) * 42;
       const priceAdvantage = ((maxPayment - payment) / Math.max(1, maxPayment)) * priceSensitivity;
       const benefit = option.benefitBonus / 45;
-      const lifeRoiScore = clamp(Math.round(64 - normalizedActualCost + priceAdvantage + benefit), 0, 100);
+      const lifeRoiScore = clamp(
+        Math.round(50 - normalizedActualCost + priceAdvantage + benefit + option.urbanDistributionBonus),
+        0,
+        100
+      );
       return { ...option, lifeRoiScore };
     })
     .sort((a, b) => b.lifeRoiScore - a.lifeRoiScore);
