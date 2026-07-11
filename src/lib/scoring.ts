@@ -1,97 +1,141 @@
-import type { CrowdAvoidanceLevel, PriorityMode, RouteOption, ScoredRouteOption, TravelConditions } from "../types";
+import type {
+  AvoidanceLevel,
+  BudgetRange,
+  CandidateOption,
+  CurrentWish,
+  IncomeRange,
+  ScoredCandidate,
+  UserProfile,
+  WishFocus
+} from "../types";
 
-const priorityMultiplier: Record<PriorityMode, number> = {
-  時間優先: 1.28,
-  バランス: 1,
-  費用優先: 0.72
+const incomeTimeValue: Record<IncomeRange, number> = {
+  "300万円未満": 1400,
+  "300万〜500万円": 2100,
+  "500万〜700万円": 2700,
+  "700万〜1,000万円": 3200,
+  "1,000万円以上": 4300,
+  回答しない: 2400
 };
 
-const crowdMultiplier: Record<CrowdAvoidanceLevel, number> = {
-  気にしない: 0.45,
-  できれば避けたい: 1,
-  できるだけ避けたい: 1.45
+const crowdMultiplier: Record<AvoidanceLevel, number> = {
+  低め: 0.7,
+  普通: 1,
+  高め: 1.35
 };
 
-export function calculateTimeValuePerMinute(conditions: TravelConditions) {
-  const base = conditions.willingnessToPayFor15Min / 15;
-  return Math.max(10, Math.round(base * priorityMultiplier[conditions.priority]));
+const budgetLimit: Record<BudgetRange, number> = {
+  できるだけ抑える: 2500,
+  "3,000円以内": 3000,
+  "5,000円以内": 5000,
+  "10,000円以内": 10000,
+  予算を気にしない: 50000
+};
+
+export function estimateTimeValue(profile: Pick<UserProfile, "incomeRange" | "familyStructure" | "childrenCount" | "priorities" | "crowdAvoidance">) {
+  const base = incomeTimeValue[profile.incomeRange] ?? incomeTimeValue["回答しない"];
+  const familyBoost = profile.familyStructure.includes("子ども") ? 1.12 : 1;
+  const childBoost = profile.childrenCount > 0 ? Math.min(1.18, 1 + profile.childrenCount * 0.05) : 1;
+  const timeBoost = profile.priorities.includes("時間") ? 1.08 : 1;
+  const crowdBoost = profile.crowdAvoidance === "高め" ? 1.06 : 1;
+  return Math.round((base * familyBoost * childBoost * timeBoost * crowdBoost) / 100) * 100;
 }
 
-export function scoreRouteOptions(options: RouteOption[], conditions: TravelConditions): ScoredRouteOption[] {
-  const baseline = options.find((option) => option.id === "now-fastest") ?? options[0];
-  const timeValuePerMinute = calculateTimeValuePerMinute(conditions);
-  const baselineCrowdedMinutes = baseline.crowdedMinutes;
-  const baselineDeparture = toMinutes(baseline.departureTime);
-  const baselineDuration = baseline.durationMinutes;
+export function scoreCandidates(candidates: CandidateOption[], profile: UserProfile, wish: CurrentWish): ScoredCandidate[] {
+  const timeValuePerMinute = profile.timeValuePerHour / 60;
+  const relevant = candidates.filter((candidate) => isRelevant(candidate, wish));
+  const pool = relevant.length >= 3 ? relevant : candidates;
 
-  const scored = options.map((option) => {
-    const transferPenalty = Math.max(0, option.transfers - conditions.transferLimit) * 160;
-    const walkOverLimit = Math.max(0, option.walkMinutes - conditions.walkLimitMinutes);
-    const travelTimeCost = option.durationMinutes * timeValuePerMinute;
-    const crowdCost = Math.round(option.crowdedMinutes * timeValuePerMinute * crowdMultiplier[conditions.crowdAvoidance] * 1.35);
-    const walkCost = Math.round(option.walkMinutes * 12 + walkOverLimit * 35);
-    const totalBurden = option.fare + travelTimeCost + crowdCost + walkCost + option.delayRiskCost + option.effortCost + transferPenalty;
-    const congestionMinutesReduced = Math.max(0, baselineCrowdedMinutes - option.crowdedMinutes);
-    const departureShift = Math.max(0, toMinutes(option.departureTime) - baselineDeparture);
-    const extraTravelMinutes = Math.max(0, option.durationMinutes - baselineDuration);
-    const farePenaltyMinutes = Math.max(0, Math.ceil((option.fare - baseline.fare) / Math.max(1, timeValuePerMinute)));
-    const recoveredMinutes = Math.max(0, departureShift - extraTravelMinutes - farePenaltyMinutes - option.transfers);
-
-    return {
-      ...option,
-      timeValuePerMinute,
-      travelTimeCost,
-      crowdCost,
-      walkCost,
-      totalBurden,
-      deltaVsBaseline: 0,
-      congestionMinutesReduced,
-      recoveredMinutes,
-      totalBenefitYen: 0,
-      lifeRoiScore: 0,
-      reason: ""
-    };
-  });
-
-  const baselineScored = scored.find((option) => option.id === baseline.id) ?? scored[0];
-  return scored
-    .map((option) => {
-      const deltaVsBaseline = baselineScored.totalBurden - option.totalBurden;
-      const comfortBonus = option.congestionMinutesReduced * 0.7 + option.recoveredMinutes * 0.45 + (option.seatChance === "高い" ? 3 : 0);
-      const arrivalPenalty = arrivesAfterTarget(option.arrivalTime, conditions.arrivalTime) ? 28 : 0;
-      const lifeRoiScore = clamp(Math.round(102 - option.totalBurden / 80 + comfortBonus - arrivalPenalty), 0, 100);
-      const totalBenefitYen = Math.max(0, Math.round(deltaVsBaseline + option.recoveredMinutes * option.timeValuePerMinute));
+  return pool
+    .map((candidate) => {
+      const timeCost = Math.round((candidate.travelMinutes / 60) * profile.timeValuePerHour);
+      const crowdCost = Math.round(crowdBase(candidate.crowdLevel) * crowdMultiplier[profile.crowdAvoidance] * focusCrowdBoost(wish.focus));
+      const fatigueCost = Math.round(Math.max(0, candidate.requiredMinutes - 120) * timeValuePerMinute * 0.16);
+      const actualCost = candidate.expectedCost + timeCost + crowdCost + fatigueCost;
+      const satisfaction = satisfactionScore(candidate, profile, wish);
+      const budgetPenalty = candidate.expectedCost > budgetLimit[wish.budget] ? 12 : 0;
+      const timeFitPenalty = timeFit(candidate.requiredMinutes, wish.availableTime) ? 0 : 10;
+      const focusBonus = focusScore(candidate, wish.focus);
+      const roiScore = clamp(Math.round(satisfaction + focusBonus - actualCost / 620 - budgetPenalty - timeFitPenalty), 0, 100);
 
       return {
-        ...option,
-        deltaVsBaseline,
-        totalBenefitYen,
-        lifeRoiScore,
-        reason: buildReason(option, conditions, totalBenefitYen)
+        ...candidate,
+        timeCost,
+        crowdCost,
+        fatigueCost,
+        actualCost,
+        roiScore,
+        rank: 0,
+        reason: buildReason(candidate, profile, wish, actualCost),
+        matchedSignals: buildSignals(candidate, profile, wish)
       };
     })
-    .sort((a, b) => b.lifeRoiScore - a.lifeRoiScore);
+    .sort((a, b) => b.roiScore - a.roiScore)
+    .slice(0, 3)
+    .map((candidate, index) => ({
+      ...candidate,
+      rank: index + 1,
+      tags: index === 0 ? ["あなた向け1位", ...candidate.tags.filter((tag) => tag !== "あなた向け1位")].slice(0, 4) : candidate.tags.slice(0, 4)
+    }));
 }
 
-function buildReason(option: ScoredRouteOption, conditions: TravelConditions, totalBenefitYen: number) {
-  if (option.id === "delay-comfort") {
-    return `出発を15分遅らせても到着希望時刻 ${conditions.arrivalTime} に間に合います。混雑時間を約${option.congestionMinutesReduced}分減らせるため、あなたの設定では今すぐ移動するより総合的に${formatYen(totalBenefitYen)}相当お得です。`;
-  }
-
-  if (option.id === "alternate-calm") {
-    return `少し歩いて別経路を使うことで、混雑時間を約${option.congestionMinutesReduced}分減らせます。徒歩時間は増えますが、混雑回避を重視する日は快適さを取り戻しやすい案です。`;
-  }
-
-  return "到着は最も早い一方で、ピーク時間帯の混雑負担が大きくなります。時間を最優先する場合の比較基準として表示しています。";
+function isRelevant(candidate: CandidateOption, wish: CurrentWish) {
+  return candidate.categories.includes(wish.purpose) || candidate.suitedFor.includes(wish.companion);
 }
 
-function arrivesAfterTarget(arrivalTime: string, targetTime: string) {
-  return toMinutes(arrivalTime) > toMinutes(targetTime);
+function satisfactionScore(candidate: CandidateOption, profile: UserProfile, wish: CurrentWish) {
+  const familyWeight = wish.companion === "家族" || wish.companion === "子ども" || profile.childrenCount > 0 ? 0.42 : 0.16;
+  const comfortWeight = wish.focus === "快適さ" || wish.focus === "混雑回避" ? 0.3 : 0.22;
+  const experienceWeight = 1 - familyWeight - comfortWeight;
+  return candidate.familySatisfaction * familyWeight + candidate.comfortScore * comfortWeight + candidate.experienceValue * experienceWeight;
 }
 
-function toMinutes(time: string) {
-  const [hour, minute] = time.split(":").map(Number);
-  return hour * 60 + minute;
+function focusScore(candidate: CandidateOption, focus: WishFocus) {
+  if (focus === "混雑回避") return candidate.crowdLevel === "低" ? 13 : candidate.crowdLevel === "中" ? 4 : -8;
+  if (focus === "家族の満足度") return (candidate.familySatisfaction - 70) / 2.2;
+  if (focus === "快適さ") return (candidate.comfortScore - 70) / 2.4;
+  if (focus === "費用") return candidate.expectedCost <= 5000 ? 10 : -8;
+  if (focus === "時間") return candidate.travelMinutes <= 35 ? 10 : candidate.travelMinutes <= 55 ? 3 : -7;
+  return 5;
+}
+
+function focusCrowdBoost(focus: WishFocus) {
+  return focus === "混雑回避" ? 1.22 : 1;
+}
+
+function crowdBase(level: CandidateOption["crowdLevel"]) {
+  if (level === "低") return 280;
+  if (level === "中") return 780;
+  return 1600;
+}
+
+function timeFit(requiredMinutes: number, available: CurrentWish["availableTime"]) {
+  const limit = available === "1時間以内" ? 70 : available === "2〜3時間" ? 190 : available === "半日" ? 300 : 520;
+  return requiredMinutes <= limit;
+}
+
+function buildReason(candidate: CandidateOption, profile: UserProfile, wish: CurrentWish, actualCost: number) {
+  const familyPhrase = profile.childrenCount > 0 ? `未就学児を含む家族${profile.childrenCount + 2}人の満足度` : "同行者の満足度";
+  const focusPhrase =
+    wish.focus === "混雑回避"
+      ? "混雑が少なく、移動後の疲労も抑えやすい"
+      : wish.focus === "費用"
+        ? "支払費用を抑えやすい"
+        : wish.focus === "時間"
+          ? "移動と滞在の時間効率が良い"
+          : "時間・費用・快適さのバランスが良い";
+
+  return `${candidate.baseReason} ${focusPhrase}ため、${familyPhrase}を含めると今回の総合ROIが高くなります。時間価値を含めた実質コストは${formatYen(actualCost)}です。`;
+}
+
+function buildSignals(candidate: CandidateOption, profile: UserProfile, wish: CurrentWish) {
+  const signals: string[] = [];
+  if (candidate.categories.includes(wish.purpose)) signals.push(`目的「${wish.purpose}」に一致`);
+  if (candidate.suitedFor.includes(wish.companion)) signals.push(`同行者「${wish.companion}」に対応`);
+  if (candidate.expectedCost <= budgetLimit[wish.budget]) signals.push("予算内");
+  if (candidate.crowdLevel === "低" && profile.crowdAvoidance === "高め") signals.push("混雑回避と相性が良い");
+  if (candidate.travelMinutes <= 40 && profile.priorities.includes("時間")) signals.push("移動時間が短い");
+  return signals.slice(0, 4);
 }
 
 function clamp(value: number, min: number, max: number) {
