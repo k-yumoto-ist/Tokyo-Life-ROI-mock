@@ -1,66 +1,72 @@
-export type Step = "hero" | "profile" | "scenario" | "comparison";
+export type Step = "input" | "results";
 
-export type IncomePreset = 300 | 500 | 700 | 1000 | "custom";
-export type FreeTime = "少ない" | "普通" | "多い";
-export type Busyness = "余裕あり" | "普通" | "忙しい" | "とても忙しい";
-export type FamilyStatus = "一人暮らし" | "夫婦" | "子育て中" | "介護あり";
+export type TravelPurpose = "通勤" | "仕事の移動" | "買い物" | "お出かけ";
+export type PriorityMode = "時間優先" | "バランス" | "費用優先";
+export type CrowdAvoidanceLevel = "気にしない" | "できれば避けたい" | "できるだけ避けたい";
+export type CrowdingLevel = "空いている" | "やや混雑" | "非常に混雑";
+export type SeatChance = "低い" | "中程度" | "高い";
 
-export type UserProfile = {
-  annualIncome: number;
-  incomePreset: IncomePreset;
-  freeTime: FreeTime;
-  busyness: Busyness;
-  familyStatus: FamilyStatus;
+export type TravelConditions = {
+  origin: string;
+  destination: string;
+  arrivalTime: string;
+  purpose: TravelPurpose;
+  priority: PriorityMode;
+  crowdAvoidance: CrowdAvoidanceLevel;
+  willingnessToPayFor15Min: number;
+  walkLimitMinutes: number;
+  transferLimit: number;
 };
 
-export type ScenarioId = "shopping" | "admin" | "mobility" | "family";
-
-export type UrbanImpact = {
-  congestionAvoidance: number;
-  alternativeUse: number;
-  travelReduction: number;
-  score: number;
-};
-
-export type LifeOption = {
+export type RouteOption = {
   id: string;
-  name: string;
-  shortName: string;
-  paymentCost: number;
-  feeCost?: number;
-  travelMinutes: number;
-  waitMinutes?: number;
-  workMinutes: number;
-  crowd: string;
-  fatigue: "なし" | "低" | "中" | "高";
-  risk: "低" | "中" | "高";
-  fatigueBaseCost: number;
-  riskBaseCost: number;
-  congestionBaseCost: number;
-  benefitBonus: number;
-  urbanImpact: UrbanImpact;
-  facts: string[];
-  reason: string;
-  caution: string;
-  fit: string;
-};
-
-export type Scenario = {
-  id: ScenarioId;
   title: string;
-  description: string;
-  icon: string;
-  options: LifeOption[];
-  insight: string;
+  label: string;
+  departureTime: string;
+  arrivalTime: string;
+  durationMinutes: number;
+  fare: number;
+  crowding: CrowdingLevel;
+  crowdingScore: number;
+  crowdedMinutes: number;
+  walkMinutes: number;
+  seatChance: SeatChance;
+  transfers: number;
+  delayRiskCost: number;
+  effortCost: number;
+  note: string;
 };
 
-export type ScoredOption = LifeOption & {
-  totalMinutes: number;
-  timeCost: number;
-  fatigueCost: number;
-  riskCost: number;
-  congestionCost: number;
-  urbanDistributionBonus: number;
-  actualCost: number;
+export type ScoredRouteOption = RouteOption & {
+  timeValuePerMinute: number;
+  travelTimeCost: number;
+  crowdCost: number;
+  walkCost: number;
+  totalBurden: number;
+  deltaVsBaseline: number;
+  congestionMinutesReduced: number;
+  recoveredMinutes: number;
+  totalBenefitYen: number;
   lifeRoiScore: number;
+  reason: string;
+};
+
+export type PersonalImpact = {
+  recoveredThisTripMinutes: number;
+  recoveredThisMonthMinutes: number;
+  avoidedCrowdingThisMonthMinutes: number;
+  monthlyBenefitYen: number;
+};
+
+export type TokyoImpact = {
+  shiftedTrips: number;
+  reducedCrowdingHours: number;
+  routeDistributionRate: number;
+  sampleNote: string;
+};
+
+export type OpenDataSource = {
+  title: string;
+  data: string;
+  usage: string;
 };
