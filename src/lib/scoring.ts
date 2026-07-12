@@ -5,9 +5,10 @@ export function selectedPlanOrDefault(plans: Plan[], selectedPlanId: string | nu
 }
 
 export function satisfactionToScore(satisfaction: Satisfaction) {
-  if (satisfaction === "good") return 5;
-  if (satisfaction === "ok") return 3.8;
-  if (satisfaction === "bad") return 2.6;
+  if (satisfaction === "great") return 5;
+  if (satisfaction === "good") return 4.5;
+  if (satisfaction === "ok") return 3.6;
+  if (satisfaction === "bad") return 2.4;
   return 0;
 }
 

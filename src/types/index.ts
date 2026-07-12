@@ -1,7 +1,7 @@
-export type View = "home" | "plans" | "action" | "history" | "reflection" | "profile";
+export type View = "home" | "plans" | "decision" | "choice" | "action" | "history" | "reflection" | "profile";
 export type GoalId = "time" | "saving" | "quiet" | "family";
 export type PlanId = "plan-a" | "plan-b" | "plan-c";
-export type Satisfaction = "good" | "ok" | "bad" | null;
+export type Satisfaction = "great" | "good" | "ok" | "bad" | null;
 export type FamilyType = "一人暮らし" | "パートナーと二人" | "子どもあり" | "親との同居" | "その他";
 export type TransportMode = "train" | "bus" | "car" | "bike" | "walk";
 export type DefaultPriority = "time" | "cost" | "quiet" | "comfort" | "family" | "health";

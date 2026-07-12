@@ -15,6 +15,7 @@ import {
   Navigation,
   PiggyBank,
   Save,
+  Settings,
   Smile,
   Sparkles,
   Star,
@@ -80,9 +81,8 @@ import type {
 
 const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "home", label: "ホーム", icon: <HomeIcon size={21} /> },
-  { id: "plans", label: "提案", icon: <Lightbulb size={21} /> },
-  { id: "history", label: "履歴", icon: <History size={21} /> },
-  { id: "reflection", label: "振り返り", icon: <Smile size={21} /> }
+  { id: "history", label: "My ROI", icon: <History size={21} /> },
+  { id: "profile", label: "設定", icon: <Settings size={21} /> }
 ];
 
 const familyTypes: FamilyType[] = ["一人暮らし", "パートナーと二人", "子どもあり", "親との同居", "その他"];
@@ -114,6 +114,7 @@ export default function App() {
   const [routeForm, setRouteForm] = useState<RouteForm>(initialRouteForm);
   const [outingForm, setOutingForm] = useState<OutingForm>(initialOutingForm);
   const [decisionResult, setDecisionResult] = useState<DecisionResult | null>(null);
+  const [selectedDecision, setSelectedDecision] = useState<DecisionCandidate | null>(null);
   const [loadingStep, setLoadingStep] = useState(-1);
 
   useEffect(() => {
@@ -208,7 +209,23 @@ export default function App() {
     window.setTimeout(() => {
       setDecisionResult(mode === "route" ? buildRouteResult(routeForm) : buildOutingResult(outingForm));
       setLoadingStep(-1);
+      setView("decision");
     }, messages.length * 520 + 180);
+  }
+
+  function chooseDecision(candidate: DecisionCandidate) {
+    setSelectedDecision(candidate);
+    setView("choice");
+  }
+
+  function reflectDecisionLater() {
+    setState((current) => ({
+      ...current,
+      selectedPlanId: recommendedPlan.id,
+      actionCompleted: true,
+      feedback: initialFeedback
+    }));
+    setView("reflection");
   }
 
   return (
@@ -238,6 +255,27 @@ export default function App() {
               onSearch={runDecisionSearch}
             />
           )}
+          {view === "decision" && decisionResult && (
+            <DecisionScreen
+              result={decisionResult}
+              profile={state.profile}
+              mode={decisionMode}
+              routeForm={routeForm}
+              outingForm={outingForm}
+              onBack={() => setView("home")}
+              onChoose={chooseDecision}
+            />
+          )}
+          {view === "choice" && selectedDecision && (
+            <ChoiceCompleteScreen
+              candidate={selectedDecision}
+              mode={decisionMode}
+              onOpenRoute={() => setToast("外部地図を開く想定です")}
+              onAddSchedule={() => setToast("予定に追加しました")}
+              onReflect={reflectDecisionLater}
+              onHome={() => setView("home")}
+            />
+          )}
           {view === "plans" && (
             <PlansScreen
               selectedGoal={state.selectedGoal}
@@ -248,7 +286,7 @@ export default function App() {
           )}
           {view === "action" && <ActionScreen plan={selectedPlan} onComplete={completeAction} onChangePlan={() => setView("plans")} />}
           {view === "profile" && <ProfileScreen profile={state.profile} onSave={saveProfile} onCancel={() => setView("home")} />}
-          {view === "history" && <HistoryScreen stats={state.stats} selectedPlan={selectedPlan} onReset={resetDemo} />}
+          {view === "history" && <HistoryScreen stats={state.stats} selectedPlan={selectedPlan} onReflect={() => setView("reflection")} onReset={resetDemo} />}
           {view === "reflection" && (
             <ReflectionScreen
               plan={selectedPlan}
@@ -356,19 +394,23 @@ function HomeScreen({
       <header className="top-bar">
         <div>
           <h1 className="brand-title">Tokyo Life ROI</h1>
-          <p className="today-question">今日は、何を決めますか?</p>
+          <p className="today-question">今日はどうしますか?</p>
         </div>
         <button className="round-icon-button" aria-label="個人設定を開く" onClick={onProfile}>
           <UserRound size={20} />
         </button>
       </header>
 
-      <div className="mode-tabs" role="tablist" aria-label="決めたいことを選択">
-        <button className={decisionMode === "route" ? "is-active" : ""} onClick={() => onMode("route")} role="tab" aria-selected={decisionMode === "route"}>
-          行き方を決める
+      <div className="mode-card-grid" aria-label="決めたいことを選択">
+        <button className={decisionMode === "route" ? "is-active" : ""} onClick={() => onMode("route")} aria-pressed={decisionMode === "route"}>
+          <MapPin size={22} />
+          <strong>行き先が決まっている</strong>
+          <span>行き方を比較</span>
         </button>
-        <button className={decisionMode === "outing" ? "is-active" : ""} onClick={() => onMode("outing")} role="tab" aria-selected={decisionMode === "outing"}>
-          過ごし方を決める
+        <button className={decisionMode === "outing" ? "is-active" : ""} onClick={() => onMode("outing")} aria-pressed={decisionMode === "outing"}>
+          <Lightbulb size={22} />
+          <strong>過ごし方から探したい</strong>
+          <span>行き先を提案</span>
         </button>
       </div>
 
@@ -385,15 +427,6 @@ function HomeScreen({
       )}
 
       {isDecisionLoading && <DecisionLoading message={loadingMessages[Math.max(0, loadingStep)]} />}
-      {decisionResult && !isDecisionLoading && <DecisionResultPanel result={decisionResult} profile={profile} onStart={onStart} />}
-
-      <section className="legacy-entry-card">
-        <div>
-          <strong>いつもの提案も確認できます</strong>
-          <p>過去の振り返りをもとにした移動プラン比較へ進みます。</p>
-        </div>
-        <button className="mini-link-button" onClick={onPlans}>提案を見る</button>
-      </section>
 
       <MyRoiSummary stats={stats} compact />
     </section>
@@ -401,9 +434,13 @@ function HomeScreen({
 }
 
 function RouteDecisionForm({ form, onChange, onSearch }: { form: RouteForm; onChange: React.Dispatch<React.SetStateAction<RouteForm>>; onSearch: () => void }) {
+  const [showMore, setShowMore] = useState(false);
+  const visiblePriorities = showMore ? routePriorities : routePriorities.slice(0, 4);
+  const canSearch = form.destination.trim().length > 0;
+
   return (
     <article className="decision-card">
-      <p className="decision-copy">目的地までの、あなたに合った行き方を比較します</p>
+      <p className="decision-copy">目的地までの行き方を、時間・費用・混雑で比較します</p>
       <div className="source-grid" role="group" aria-label="出発地を選択">
         {[
           ["current", "現在地"],
@@ -445,7 +482,7 @@ function RouteDecisionForm({ form, onChange, onSearch }: { form: RouteForm; onCh
         ))}
       </ChipGroup>
       <ChipGroup label="今日優先したいこと">
-        {routePriorities.map((priority) => (
+        {visiblePriorities.map((priority) => (
           <ChipButton
             key={priority}
             active={form.priorities.includes(priority)}
@@ -454,17 +491,22 @@ function RouteDecisionForm({ form, onChange, onSearch }: { form: RouteForm; onCh
           />
         ))}
       </ChipGroup>
-      <button className="primary-button action-wide" onClick={onSearch}>最適な行き方を調べる</button>
+      <button className="text-action-button inline-action" onClick={() => setShowMore((value) => !value)}>{showMore ? "条件を閉じる" : "条件を追加"}</button>
+      <button className="primary-button action-wide" onClick={onSearch} disabled={!canSearch}>この条件で提案を見る</button>
     </article>
   );
 }
 
 function OutingDecisionForm({ form, onChange, onSearch }: { form: OutingForm; onChange: React.Dispatch<React.SetStateAction<OutingForm>>; onSearch: () => void }) {
+  const [showMore, setShowMore] = useState(false);
+  const visibleIntents = showMore ? outingIntents : outingIntents.slice(0, 4);
+  const canSearch = form.intents.length > 0;
+
   return (
     <article className="decision-card">
-      <p className="decision-copy">今日の目的や気分に合う行き先を提案します</p>
+      <p className="decision-copy">目的や気分に合う過ごし方を提案します</p>
       <ChipGroup label="やりたいこと">
-        {outingIntents.map((intent) => (
+        {visibleIntents.map((intent) => (
           <ChipButton
             key={intent}
             active={form.intents.includes(intent)}
@@ -483,27 +525,32 @@ function OutingDecisionForm({ form, onChange, onSearch }: { form: OutingForm; on
           <ChipButton key={budget} active={form.budget === budget} label={budgetLabels[budget]} onClick={() => onChange((current) => ({ ...current, budget }))} />
         ))}
       </SelectRow>
-      <ChipGroup label="誰と行くか">
-        {companions.map((companion) => (
-          <ChipButton key={companion} active={form.companion === companion} label={companionLabels[companion]} onClick={() => onChange((current) => ({ ...current, companion }))} />
-        ))}
-      </ChipGroup>
-      <SelectRow label="移動可能時間">
-        {travelRanges.map((travelRange) => (
-          <ChipButton key={travelRange} active={form.travelRange === travelRange} label={travelRangeLabels[travelRange]} onClick={() => onChange((current) => ({ ...current, travelRange }))} />
-        ))}
-      </SelectRow>
-      <ChipGroup label="今日優先したいこと">
-        {routePriorities.map((priority) => (
-          <ChipButton
-            key={priority}
-            active={form.priorities.includes(priority)}
-            label={routePriorityLabels[priority]}
-            onClick={() => onChange((current) => ({ ...current, priorities: toggleItem(current.priorities, priority) }))}
-          />
-        ))}
-      </ChipGroup>
-      <button className="primary-button action-wide" onClick={onSearch}>おすすめの過ごし方を探す</button>
+      {showMore && (
+        <>
+          <ChipGroup label="誰と行くか">
+            {companions.map((companion) => (
+              <ChipButton key={companion} active={form.companion === companion} label={companionLabels[companion]} onClick={() => onChange((current) => ({ ...current, companion }))} />
+            ))}
+          </ChipGroup>
+          <SelectRow label="移動可能時間">
+            {travelRanges.map((travelRange) => (
+              <ChipButton key={travelRange} active={form.travelRange === travelRange} label={travelRangeLabels[travelRange]} onClick={() => onChange((current) => ({ ...current, travelRange }))} />
+            ))}
+          </SelectRow>
+          <ChipGroup label="こだわり条件">
+            {routePriorities.map((priority) => (
+              <ChipButton
+                key={priority}
+                active={form.priorities.includes(priority)}
+                label={routePriorityLabels[priority]}
+                onClick={() => onChange((current) => ({ ...current, priorities: toggleItem(current.priorities, priority) }))}
+              />
+            ))}
+          </ChipGroup>
+        </>
+      )}
+      <button className="text-action-button inline-action" onClick={() => setShowMore((value) => !value)}>{showMore ? "条件を閉じる" : "条件を追加"}</button>
+      <button className="primary-button action-wide" onClick={onSearch} disabled={!canSearch}>おすすめを探す</button>
     </article>
   );
 }
@@ -544,6 +591,120 @@ function DecisionLoading({ message }: { message: string }) {
   );
 }
 
+function DecisionScreen({
+  result,
+  profile,
+  mode,
+  routeForm,
+  outingForm,
+  onBack,
+  onChoose
+}: {
+  result: DecisionResult;
+  profile: UserProfile;
+  mode: DecisionMode;
+  routeForm: RouteForm;
+  outingForm: OutingForm;
+  onBack: () => void;
+  onChoose: (candidate: DecisionCandidate) => void;
+}) {
+  const [showReason, setShowReason] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
+  const summary = mode === "route"
+    ? `${routeForm.destination}へ・${companionLabels[routeForm.companion]}・${routeForm.priorities.slice(0, 2).map((priority) => routePriorityLabels[priority]).join(" / ")}`
+    : `${companionLabels[outingForm.companion]}・${timeBudgetLabels[outingForm.timeBudget]}・${budgetLabels[outingForm.budget]}`;
+
+  return (
+    <section className="screen-content proposal-screen">
+      <PageHeader title="おすすめ" onBack={onBack} />
+      <p className="proposal-summary">{summary}</p>
+      <article className="proposal-main-card">
+        <div className="ai-label"><Sparkles size={15} /> あなた向けに比較しました</div>
+        <DecisionCandidateCard candidate={result.main} featured compact />
+        <p className="short-reason">{shortReason(result.main.reason)}</p>
+        <button className="primary-button action-wide" onClick={() => onChoose(result.main)}>これにする</button>
+        <button className="secondary-button action-wide" onClick={() => setShowReason((value) => !value)} aria-expanded={showReason}>
+          {showReason ? "詳しい理由を閉じる" : "詳しい理由を見る"}
+        </button>
+        {showReason && <DecisionDetail result={result} profile={profile} />}
+      </article>
+      <button className="other-options-button" onClick={() => setShowAlternatives((value) => !value)} aria-expanded={showAlternatives}>
+        {showAlternatives ? "ほかの選択肢を閉じる" : "ほかの選択肢を見る"}
+      </button>
+      {showAlternatives && (
+        <div className="compact-alternatives">
+          {result.alternatives.slice(0, 2).map((candidate) => (
+            <button key={`${candidate.label}-${candidate.title}`} onClick={() => onChoose(candidate)}>
+              <span>{candidate.label}</span>
+              <strong>{candidate.title}</strong>
+              <small>{candidate.metrics.slice(0, 3).map((metric) => `${metric.value}`).join(" / ")}</small>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function shortReason(reason: string) {
+  return reason.length > 32 ? `${reason.slice(0, 32)}…` : reason;
+}
+
+function DecisionDetail({ result, profile }: { result: DecisionResult; profile: UserProfile }) {
+  return (
+    <div className="decision-detail">
+      <h2>この提案を選んだ理由</h2>
+      <ul>
+        <li>あなたの時間価値 {profile.hourlyValue.toLocaleString("ja-JP")}円/h を反映</li>
+        <li>{profile.children > 0 ? "子ども連れの移動負担を考慮" : "普段の移動手段を考慮"}</li>
+        <li>混雑・天気・費用・満足度を比較</li>
+        <li>{result.main.reason}</li>
+      </ul>
+      <DataSourceChips sources={result.dataSources} />
+    </div>
+  );
+}
+
+function ChoiceCompleteScreen({
+  candidate,
+  mode,
+  onOpenRoute,
+  onAddSchedule,
+  onReflect,
+  onHome
+}: {
+  candidate: DecisionCandidate;
+  mode: DecisionMode;
+  onOpenRoute: () => void;
+  onAddSchedule: () => void;
+  onReflect: () => void;
+  onHome: () => void;
+}) {
+  const benefit = mode === "route" ? "7分短縮・混雑少なめ" : "満足度高め・移動負担少なめ";
+  return (
+    <section className="screen-content choice-screen">
+      <PageHeader title="選択完了" onBack={onHome} />
+      <article className="choice-card">
+        <CheckCircle2 size={42} />
+        <h1>{candidate.title}を選びました</h1>
+        <p>{benefit}</p>
+        <div className="candidate-metrics">
+          {candidate.metrics.slice(0, 4).map((metric) => (
+            <MiniMetric key={`${candidate.title}-choice-${metric.label}`} icon={<Info size={14} />} label={metric.label} value={metric.value} />
+          ))}
+        </div>
+        <p className="choice-note">この選択は、あとで振り返ることで次回の提案に反映されます。</p>
+      </article>
+      <div className="choice-actions">
+        <button className="primary-button action-wide" onClick={onOpenRoute}>経路を開く</button>
+        <button className="secondary-button action-wide" onClick={onAddSchedule}>予定に追加</button>
+        <button className="secondary-button action-wide" onClick={onReflect}>あとで振り返る</button>
+        <button className="mini-link-button full" onClick={onHome}>ホームに戻る</button>
+      </div>
+    </section>
+  );
+}
+
 function DecisionResultPanel({ result, profile, onStart }: { result: DecisionResult; profile: UserProfile; onStart: () => void }) {
   return (
     <section className="decision-result-panel">
@@ -566,9 +727,9 @@ function DecisionResultPanel({ result, profile, onStart }: { result: DecisionRes
   );
 }
 
-function DecisionCandidateCard({ candidate, featured = false }: { candidate: DecisionCandidate; featured?: boolean }) {
+function DecisionCandidateCard({ candidate, featured = false, compact = false }: { candidate: DecisionCandidate; featured?: boolean; compact?: boolean }) {
   return (
-    <article className={`decision-candidate ${featured ? "is-featured" : ""}`}>
+    <article className={`decision-candidate ${featured ? "is-featured" : ""} ${compact ? "is-compact" : ""}`}>
       <div className="candidate-head">
         <div>
           <span className="candidate-label">{candidate.label}</span>
@@ -582,7 +743,7 @@ function DecisionCandidateCard({ candidate, featured = false }: { candidate: Dec
           <MiniMetric key={`${candidate.title}-${metric.label}`} icon={<Info size={14} />} label={metric.label} value={metric.value} />
         ))}
       </div>
-      <p className="candidate-reason">{candidate.reason}</p>
+      {!compact && <p className="candidate-reason">{candidate.reason}</p>}
     </article>
   );
 }
@@ -774,9 +935,10 @@ function ReflectionScreen({
       </div>
       <h2 className="reflection-title">今日の行動はどうだった?</h2>
       <div className="satisfaction-grid" role="group" aria-label="満足度を選択">
-        <SatisfactionButton id="good" label="よかった" active={state.feedback.satisfaction === "good"} icon={<Smile size={42} />} onClick={() => onSatisfaction("good")} />
-        <SatisfactionButton id="ok" label="まあまあ" active={state.feedback.satisfaction === "ok"} icon={<Meh size={42} />} onClick={() => onSatisfaction("ok")} />
-        <SatisfactionButton id="bad" label="微妙" active={state.feedback.satisfaction === "bad"} icon={<Frown size={42} />} onClick={() => onSatisfaction("bad")} />
+        <SatisfactionButton id="great" label="とても良かった" active={state.feedback.satisfaction === "great"} icon={<Sparkles size={38} />} onClick={() => onSatisfaction("great")} />
+        <SatisfactionButton id="good" label="良かった" active={state.feedback.satisfaction === "good"} icon={<Smile size={38} />} onClick={() => onSatisfaction("good")} />
+        <SatisfactionButton id="ok" label="普通" active={state.feedback.satisfaction === "ok"} icon={<Meh size={38} />} onClick={() => onSatisfaction("ok")} />
+        <SatisfactionButton id="bad" label="いまいち" active={state.feedback.satisfaction === "bad"} icon={<Frown size={38} />} onClick={() => onSatisfaction("bad")} />
       </div>
       <p className="tag-help">当てはまるものを選んでね（複数選択OK）</p>
       <div className="feedback-tags">
@@ -1030,6 +1192,14 @@ function ProfileScreen({ profile, onSave, onCancel }: { profile: UserProfile; on
         <p className="field-help">その日の希望と組み合わせて、提案の優先順位を調整します。</p>
       </SettingsCard>
 
+      <SettingsCard icon={<Info size={20} />} title="苦手な条件・データ利用" value="混雑・長い徒歩を控えめに評価">
+        <div className="preference-summary">
+          <span>苦手な条件: 混雑、徒歩15分以上、乗換が多い移動</span>
+          <span>利用データ: 交通、混雑傾向、天気、施設情報、過去の振り返り</span>
+        </div>
+        <p className="field-help">現在はモック表示です。実サービスではオープンデータや交通データと接続します。</p>
+      </SettingsCard>
+
       <div className="profile-actions">
         <button
           className="primary-button action-wide"
@@ -1072,16 +1242,31 @@ function ChoiceButton({ active, label, onClick }: { active: boolean; label: stri
   );
 }
 
-function HistoryScreen({ stats, selectedPlan, onReset }: { stats: PersistedLoopState["stats"]; selectedPlan: Plan; onReset: () => void }) {
+function HistoryScreen({ stats, selectedPlan, onReflect, onReset }: { stats: PersistedLoopState["stats"]; selectedPlan: Plan; onReflect: () => void; onReset: () => void }) {
   return (
     <section className="screen-content">
-      <PageHeader title="履歴" />
-      <article className="history-card">
-        <p className="section-label">最近の選択</p>
-        <h2>{selectedPlan.name}: {selectedPlan.title}</h2>
-        <p>{selectedPlan.savedMinutes}分短縮 / {selectedPlan.savedYen}円お得 / 混雑 {selectedPlan.crowd}</p>
-      </article>
+      <PageHeader title="My ROI" />
       <MyRoiDashboard stats={stats} />
+      <section className="recent-list-card">
+        <h2>最近の選択</h2>
+        <button className="recent-row" onClick={onReflect}>
+          <span>7/12 朝の移動</span>
+          <strong>{selectedPlan.title}</strong>
+          <small>{selectedPlan.savedMinutes}分短縮・{selectedPlan.savedYen}円追加・満足度{selectedPlan.satisfaction.toFixed(1)}</small>
+        </button>
+        <button className="recent-row" onClick={onReflect}>
+          <span>7/10 家族のおでかけ</span>
+          <strong>屋内施設で子どもと遊ぶ</strong>
+          <small>混雑回避・満足度4.5</small>
+        </button>
+      </section>
+      <section className="quick-reflect-card">
+        <div>
+          <h2>今回の選択はどうでしたか?</h2>
+          <p>回答すると次回の提案があなた向けになります。</p>
+        </div>
+        <button className="mini-link-button" onClick={onReflect}>振り返る</button>
+      </section>
       <button className="reset-button" onClick={onReset}>デモ状態を初期化</button>
     </section>
   );
@@ -1119,7 +1304,7 @@ function MyRoiSummary({ stats, compact = false }: { stats: PersistedLoopState["s
     <section className={`my-roi-card ${compact ? "is-compact" : ""}`}>
       <h2>今月のMy ROI 📊</h2>
       <div className="roi-metrics">
-        <MetricItem icon={<Heart size={18} />} value={`${stats.supportCount}回`} label="サポート" tone="blue" />
+        <MetricItem icon={<Heart size={18} />} value={`${stats.supportCount}回`} label="選択をサポート" tone="blue" />
         <MetricItem icon={<Clock3 size={18} />} value={`${stats.savedMinutes}分`} label="時間短縮" tone="cyan" />
         <MetricItem icon={<Coins size={18} />} value={formatYen(stats.savedYen)} label="節約額" tone="green" />
         <MetricItem icon={<Star size={18} />} value={stats.averageSatisfaction.toFixed(1)} label="平均満足度" tone="orange" />
@@ -1178,10 +1363,11 @@ function PageHeader({ title, onBack }: { title: string; onBack?: () => void }) {
 }
 
 function BottomNavigation({ active, onNavigate }: { active: View; onNavigate: (view: View) => void }) {
+  const activeNav = active === "history" || active === "reflection" ? "history" : active === "profile" ? "profile" : "home";
   return (
     <nav className="bottom-nav" aria-label="下部ナビゲーション">
       {navItems.map((item) => (
-        <button key={item.id} className={active === item.id ? "is-active" : ""} onClick={() => onNavigate(item.id)} aria-current={active === item.id ? "page" : undefined}>
+        <button key={item.id} className={activeNav === item.id ? "is-active" : ""} onClick={() => onNavigate(item.id)} aria-current={activeNav === item.id ? "page" : undefined}>
           {item.icon}
           <span>{item.label}</span>
         </button>
