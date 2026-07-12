@@ -1,4 +1,14 @@
-import type { FeedbackState, GoalChip, Insight, MyRoiStats, PersistedLoopState, Plan } from "../types";
+import type {
+  DefaultPriority,
+  FeedbackState,
+  GoalChip,
+  Insight,
+  MyRoiStats,
+  PersistedLoopState,
+  Plan,
+  TransportMode,
+  UserProfile
+} from "../types";
 
 export const loopStorageKey = "tokyo-life-roi-loop-v1";
 
@@ -70,12 +80,42 @@ export const initialFeedback: FeedbackState = {
   saved: false
 };
 
+export const initialProfile: UserProfile = {
+  homeArea: "千葉県松戸市",
+  activityArea: "東京都千代田区・中央区",
+  hourlyValue: 3200,
+  familyType: "子どもあり",
+  adults: 2,
+  children: 2,
+  childAgeGroup: "未就学児",
+  transportModes: ["train", "car", "walk"],
+  defaultPriorities: ["time", "quiet", "family"]
+};
+
 export const initialLoopState: PersistedLoopState = {
   selectedGoal: "time",
   selectedPlanId: null,
   actionCompleted: false,
   feedback: initialFeedback,
-  stats: initialStats
+  stats: initialStats,
+  profile: initialProfile
+};
+
+export const transportModeLabels: Record<TransportMode, string> = {
+  train: "電車",
+  bus: "バス",
+  car: "自動車",
+  bike: "自転車",
+  walk: "徒歩"
+};
+
+export const defaultPriorityLabels: Record<DefaultPriority, string> = {
+  time: "時間を短縮したい",
+  cost: "費用を抑えたい",
+  quiet: "混雑を避けたい",
+  comfort: "快適に過ごしたい",
+  family: "家族で動きやすくしたい",
+  health: "健康的に行動したい"
 };
 
 export const feedbackTags = [

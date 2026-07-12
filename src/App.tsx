@@ -1,34 +1,54 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bell,
   CheckCircle2,
   ChevronRight,
   Clock3,
   Coins,
+  Home as HomeIcon,
   Frown,
   Heart,
   History,
-  Home,
+  Info,
   Lightbulb,
+  MapPin,
   Meh,
   Navigation,
   PiggyBank,
+  Save,
   Smile,
   Sparkles,
   Star,
   ThumbsUp,
+  TrainFront,
+  UserRound,
   Users
 } from "lucide-react";
-import { feedbackTags, goals, initialFeedback, initialLoopState, insights, loopStorageKey, plans } from "./lib/mockData";
-import { formatYen, selectedPlanOrDefault, updateStatsAfterFeedback } from "./lib/scoring";
-import type { GoalChip, GoalId, PersistedLoopState, Plan, Satisfaction, View } from "./types";
+import {
+  defaultPriorityLabels,
+  feedbackTags,
+  goals,
+  initialFeedback,
+  initialLoopState,
+  insights,
+  loopStorageKey,
+  plans,
+  transportModeLabels
+} from "./lib/mockData";
+import { buildProfileSummary, buildRecommendationReason, formatYen, selectedPlanOrDefault, updateStatsAfterFeedback } from "./lib/scoring";
+import type { DefaultPriority, FamilyType, GoalChip, GoalId, PersistedLoopState, Plan, Satisfaction, TransportMode, UserProfile, View } from "./types";
 
 const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
-  { id: "home", label: "ホーム", icon: <Home size={21} /> },
+  { id: "home", label: "ホーム", icon: <HomeIcon size={21} /> },
   { id: "plans", label: "提案", icon: <Lightbulb size={21} /> },
   { id: "history", label: "履歴", icon: <History size={21} /> },
   { id: "reflection", label: "振り返り", icon: <Smile size={21} /> }
 ];
+
+const familyTypes: FamilyType[] = ["一人暮らし", "パートナーと二人", "子どもあり", "親との同居", "その他"];
+const hourlyValueOptions = [2000, 3200, 4000, 5000];
+const childAgeGroups = ["未就学児", "小学生", "中高生"];
+const transportModes = Object.keys(transportModeLabels) as TransportMode[];
+const priorityOptions = Object.keys(defaultPriorityLabels) as DefaultPriority[];
 
 const goalIcons: Record<GoalId, React.ReactNode> = {
   time: <Clock3 size={17} />,
@@ -41,12 +61,20 @@ export default function App() {
   const [view, setView] = useState<View>("home");
   const [state, setState] = useState<PersistedLoopState>(initialLoopState);
   const [showMoreTags, setShowMoreTags] = useState(false);
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     const stored = window.localStorage.getItem(loopStorageKey);
     if (!stored) return;
     try {
-      setState({ ...initialLoopState, ...JSON.parse(stored) });
+      const parsed = JSON.parse(stored) as Partial<PersistedLoopState>;
+      setState({
+        ...initialLoopState,
+        ...parsed,
+        feedback: { ...initialLoopState.feedback, ...parsed.feedback },
+        stats: { ...initialLoopState.stats, ...parsed.stats },
+        profile: { ...initialLoopState.profile, ...parsed.profile }
+      });
     } catch {
       setState(initialLoopState);
     }
@@ -58,6 +86,7 @@ export default function App() {
 
   const selectedPlan = useMemo(() => selectedPlanOrDefault(plans, state.selectedPlanId), [state.selectedPlanId]);
   const recommendedPlan = plans.find((plan) => plan.recommended) ?? plans[0];
+  const recommendationReason = useMemo(() => buildRecommendationReason(state.profile, recommendedPlan), [recommendedPlan, state.profile]);
 
   function selectGoal(goal: GoalId) {
     setState((current) => ({ ...current, selectedGoal: goal }));
@@ -103,7 +132,15 @@ export default function App() {
     window.localStorage.removeItem(loopStorageKey);
     setState(initialLoopState);
     setShowMoreTags(false);
+    setToast("");
     setView("home");
+  }
+
+  function saveProfile(profile: UserProfile) {
+    setState((current) => ({ ...current, profile }));
+    setView("home");
+    setToast("個人設定を更新しました");
+    window.setTimeout(() => setToast(""), 1800);
   }
 
   return (
@@ -115,13 +152,24 @@ export default function App() {
               selectedGoal={state.selectedGoal}
               stats={state.stats}
               recommendedPlan={recommendedPlan}
+              profile={state.profile}
+              recommendationReason={recommendationReason}
               onGoal={selectGoal}
               onStart={() => startAction(recommendedPlan)}
               onPlans={() => setView("plans")}
+              onProfile={() => setView("profile")}
             />
           )}
-          {view === "plans" && <PlansScreen selectedGoal={state.selectedGoal} onBack={() => setView("home")} onSelect={startAction} />}
+          {view === "plans" && (
+            <PlansScreen
+              selectedGoal={state.selectedGoal}
+              profile={state.profile}
+              onBack={() => setView("home")}
+              onSelect={startAction}
+            />
+          )}
           {view === "action" && <ActionScreen plan={selectedPlan} onComplete={completeAction} onChangePlan={() => setView("plans")} />}
+          {view === "profile" && <ProfileScreen profile={state.profile} onSave={saveProfile} onCancel={() => setView("home")} />}
           {view === "history" && <HistoryScreen stats={state.stats} selectedPlan={selectedPlan} onReset={resetDemo} />}
           {view === "reflection" && (
             <ReflectionScreen
@@ -136,6 +184,7 @@ export default function App() {
               onHome={() => setView("home")}
             />
           )}
+          {toast && <div className="toast-message" role="status">{toast}</div>}
           <BottomNavigation active={view} onNavigate={setView} />
         </div>
       </main>
@@ -147,16 +196,22 @@ function HomeScreen({
   selectedGoal,
   stats,
   recommendedPlan,
+  profile,
+  recommendationReason,
   onGoal,
   onStart,
-  onPlans
+  onPlans,
+  onProfile
 }: {
   selectedGoal: GoalId;
   stats: PersistedLoopState["stats"];
   recommendedPlan: Plan;
+  profile: UserProfile;
+  recommendationReason: string;
   onGoal: (goal: GoalId) => void;
   onStart: () => void;
   onPlans: () => void;
+  onProfile: () => void;
 }) {
   return (
     <section className="screen-content home-hero">
@@ -165,8 +220,8 @@ function HomeScreen({
           <h1 className="brand-title">Tokyo Life ROI</h1>
           <p className="today-question">今日はどうしたい?</p>
         </div>
-        <button className="round-icon-button" aria-label="通知">
-          <Bell size={20} />
+        <button className="round-icon-button" aria-label="個人設定を開く" onClick={onProfile}>
+          <UserRound size={20} />
         </button>
       </header>
 
@@ -176,7 +231,13 @@ function HomeScreen({
         ))}
       </div>
 
-      <RecommendationCard plan={recommendedPlan} onStart={onStart} onPlans={onPlans} />
+      <button className="profile-summary-button" onClick={onProfile} aria-label="個人設定を確認・変更">
+        <UserRound size={16} />
+        <span>{buildProfileSummary(profile)}</span>
+        <ChevronRight size={16} />
+      </button>
+
+      <RecommendationCard plan={recommendedPlan} reason={recommendationReason} onStart={onStart} onPlans={onPlans} />
       <MyRoiSummary stats={stats} compact />
     </section>
   );
@@ -192,10 +253,11 @@ function GoalChipButton({ goal, active, onClick }: { goal: GoalChip; active: boo
   );
 }
 
-function RecommendationCard({ plan, onStart, onPlans }: { plan: Plan; onStart: () => void; onPlans: () => void }) {
+function RecommendationCard({ plan, reason, onStart, onPlans }: { plan: Plan; reason: string; onStart: () => void; onPlans: () => void }) {
   return (
     <article className="recommendation-card">
       <div className="section-label">今のあなたにおすすめ ✨</div>
+      <p className="recommendation-note"><Info size={14} /> あなたの時間価値・家族構成・過去の選択をもとに提案しています</p>
       <div className="recommendation-main">
         <div className="train-illustration" aria-hidden="true">
           <Navigation size={42} />
@@ -205,6 +267,10 @@ function RecommendationCard({ plan, onStart, onPlans }: { plan: Plan; onStart: (
           <p>{plan.description}</p>
           <span className="tiny-pill">+ 時短の達人プラン</span>
         </div>
+      </div>
+      <div className="recommendation-reason">
+        <strong>おすすめ理由</strong>
+        <p>{reason}</p>
       </div>
       <div className="metric-grid">
         <MetricItem icon={<Clock3 size={18} />} value={`${plan.savedMinutes}分`} label="短縮" tone="blue" />
@@ -222,7 +288,7 @@ function RecommendationCard({ plan, onStart, onPlans }: { plan: Plan; onStart: (
   );
 }
 
-function PlansScreen({ selectedGoal, onBack, onSelect }: { selectedGoal: GoalId; onBack: () => void; onSelect: (plan: Plan) => void }) {
+function PlansScreen({ selectedGoal, profile, onBack, onSelect }: { selectedGoal: GoalId; profile: UserProfile; onBack: () => void; onSelect: (plan: Plan) => void }) {
   const selectedGoalLabel = goals.find((goal) => goal.id === selectedGoal)?.label ?? "時短";
   return (
     <section className="screen-content">
@@ -230,7 +296,7 @@ function PlansScreen({ selectedGoal, onBack, onSelect }: { selectedGoal: GoalId;
       <p className="condition-line"><Clock3 size={17} /> 今日は「{selectedGoalLabel}」を重視しています</p>
       <div className="plan-list">
         {plans.map((plan) => (
-          <PlanComparisonCard key={plan.id} plan={plan} onSelect={() => onSelect(plan)} />
+          <PlanComparisonCard key={plan.id} plan={plan} profile={profile} onSelect={() => onSelect(plan)} />
         ))}
       </div>
       <p className="demo-note">表示の情報は予測値です。実際の結果と異なる場合があります。</p>
@@ -238,7 +304,7 @@ function PlansScreen({ selectedGoal, onBack, onSelect }: { selectedGoal: GoalId;
   );
 }
 
-function PlanComparisonCard({ plan, onSelect }: { plan: Plan; onSelect: () => void }) {
+function PlanComparisonCard({ plan, profile, onSelect }: { plan: Plan; profile: UserProfile; onSelect: () => void }) {
   const accent = plan.id === "plan-a" ? "blue" : plan.id === "plan-b" ? "green" : "orange";
   return (
     <article className={`plan-card plan-${accent} ${plan.recommended ? "is-recommended" : ""}`}>
@@ -252,6 +318,9 @@ function PlanComparisonCard({ plan, onSelect }: { plan: Plan; onSelect: () => vo
           <p>{plan.description}</p>
         </div>
       </div>
+      {plan.recommended && (
+        <p className="plan-reason"><Info size={14} /> {buildRecommendationReason(profile, plan)}</p>
+      )}
       <div className="plan-metrics">
         <MiniMetric icon={<Clock3 size={15} />} label="時間" value={`${plan.timeMinutes}分`} />
         <MiniMetric icon={<Coins size={15} />} label="費用" value={formatYen(plan.cost)} />
@@ -374,6 +443,149 @@ function FeedbackSavedScreen({ stats, onMyRoi, onHome }: { stats: PersistedLoopS
         <button className="secondary-button action-wide" onClick={onHome}>ホームに戻る</button>
       </div>
     </section>
+  );
+}
+
+function ProfileScreen({ profile, onSave, onCancel }: { profile: UserProfile; onSave: (profile: UserProfile) => void; onCancel: () => void }) {
+  const [draft, setDraft] = useState(profile);
+
+  function setField<K extends keyof UserProfile>(key: K, value: UserProfile[K]) {
+    setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleTransport(mode: TransportMode) {
+    setDraft((current) => {
+      const exists = current.transportModes.includes(mode);
+      const transportModes = exists ? current.transportModes.filter((item) => item !== mode) : [...current.transportModes, mode];
+      return { ...current, transportModes };
+    });
+  }
+
+  function togglePriority(priority: DefaultPriority) {
+    setDraft((current) => {
+      const exists = current.defaultPriorities.includes(priority);
+      const defaultPriorities = exists ? current.defaultPriorities.filter((item) => item !== priority) : [...current.defaultPriorities, priority];
+      return { ...current, defaultPriorities };
+    });
+  }
+
+  return (
+    <section className="screen-content profile-screen">
+      <PageHeader title="個人設定" onBack={onCancel} />
+      <div className="profile-intro">
+        <strong>最初に一度設定するだけで、毎日の提案に反映されます</strong>
+        <p>あなたに合った行動を提案するための基本情報です。設定内容は後から変更できます。</p>
+      </div>
+
+      <SettingsCard icon={<MapPin size={20} />} title="生活エリア" value={`${draft.homeArea} / ${draft.activityArea}`}>
+        <label className="profile-field">
+          <span>居住エリア</span>
+          <input value={draft.homeArea} onChange={(event) => setField("homeArea", event.target.value)} />
+        </label>
+        <label className="profile-field">
+          <span>主な勤務地・活動エリア</span>
+          <input value={draft.activityArea} onChange={(event) => setField("activityArea", event.target.value)} />
+        </label>
+        <p className="field-help">詳細な住所ではなく、市区町村やエリア単位で設定します。</p>
+      </SettingsCard>
+
+      <SettingsCard icon={<Coins size={20} />} title="あなたの時間価値" value={`1時間あたり ${formatYen(draft.hourlyValue)}`}>
+        <div className="choice-grid two-column" role="group" aria-label="時間価値を選択">
+          {hourlyValueOptions.map((value) => (
+            <ChoiceButton
+              key={value}
+              active={draft.hourlyValue === value}
+              label={value >= 5000 ? "5,000円以上" : `${value.toLocaleString("ja-JP")}円/h`}
+              onClick={() => setField("hourlyValue", value)}
+            />
+          ))}
+        </div>
+        <p className="field-help">移動時間や待ち時間を金額換算し、あなたにとって得な選択を計算します。</p>
+      </SettingsCard>
+
+      <SettingsCard icon={<Users size={20} />} title="家族構成" value={draft.children > 0 ? `大人${draft.adults}人・子ども${draft.children}人・${draft.childAgeGroup}` : draft.familyType}>
+        <div className="choice-grid two-column" role="group" aria-label="家族構成を選択">
+          {familyTypes.map((familyType) => (
+            <ChoiceButton
+              key={familyType}
+              active={draft.familyType === familyType}
+              label={familyType}
+              onClick={() => setDraft((current) => ({ ...current, familyType, children: familyType === "子どもあり" ? Math.max(current.children, 1) : 0 }))}
+            />
+          ))}
+        </div>
+        {draft.familyType === "子どもあり" && (
+          <div className="child-settings">
+            <div className="number-row">
+              <span>大人</span>
+              <button onClick={() => setField("adults", Math.max(1, draft.adults - 1))} aria-label="大人を減らす">-</button>
+              <strong>{draft.adults}人</strong>
+              <button onClick={() => setField("adults", draft.adults + 1)} aria-label="大人を増やす">+</button>
+            </div>
+            <div className="number-row">
+              <span>子ども</span>
+              <button onClick={() => setField("children", Math.max(1, draft.children - 1))} aria-label="子どもを減らす">-</button>
+              <strong>{draft.children}人</strong>
+              <button onClick={() => setField("children", draft.children + 1)} aria-label="子どもを増やす">+</button>
+            </div>
+            <div className="choice-grid three-column" role="group" aria-label="子どもの年齢層を選択">
+              {childAgeGroups.map((ageGroup) => (
+                <ChoiceButton key={ageGroup} active={draft.childAgeGroup === ageGroup} label={ageGroup} onClick={() => setField("childAgeGroup", ageGroup)} />
+              ))}
+            </div>
+          </div>
+        )}
+        <p className="field-help">家族向け、子どもが疲れにくい、移動が少ないなどの評価に使います。</p>
+      </SettingsCard>
+
+      <SettingsCard icon={<TrainFront size={20} />} title="主な移動手段" value={draft.transportModes.map((mode) => transportModeLabels[mode]).join("・") || "未設定"}>
+        <div className="choice-grid three-column" role="group" aria-label="主な移動手段を選択">
+          {transportModes.map((mode) => (
+            <ChoiceButton key={mode} active={draft.transportModes.includes(mode)} label={transportModeLabels[mode]} onClick={() => toggleTransport(mode)} />
+          ))}
+        </div>
+      </SettingsCard>
+
+      <SettingsCard icon={<Lightbulb size={20} />} title="普段重視すること" value={draft.defaultPriorities.map((priority) => defaultPriorityLabels[priority]).slice(0, 2).join("・")}>
+        <div className="choice-grid two-column" role="group" aria-label="普段重視することを選択">
+          {priorityOptions.map((priority) => (
+            <ChoiceButton key={priority} active={draft.defaultPriorities.includes(priority)} label={defaultPriorityLabels[priority]} onClick={() => togglePriority(priority)} />
+          ))}
+        </div>
+        <p className="field-help">その日の希望と組み合わせて、提案の優先順位を調整します。</p>
+      </SettingsCard>
+
+      <div className="profile-actions">
+        <button className="primary-button action-wide" onClick={() => onSave(draft)}>
+          <Save size={18} /> 設定を保存
+        </button>
+        <button className="secondary-button action-wide" onClick={onCancel}>変更をキャンセル</button>
+      </div>
+    </section>
+  );
+}
+
+function SettingsCard({ icon, title, value, children }: { icon: React.ReactNode; title: string; value: string; children: React.ReactNode }) {
+  return (
+    <article className="settings-card">
+      <div className="settings-card-head">
+        <span className="settings-icon">{icon}</span>
+        <div>
+          <h2>{title}</h2>
+          <p>{value}</p>
+        </div>
+      </div>
+      {children}
+    </article>
+  );
+}
+
+function ChoiceButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button className={`choice-button ${active ? "is-active" : ""}`} onClick={onClick} aria-pressed={active}>
+      {active && <CheckCircle2 size={14} />}
+      {label}
+    </button>
   );
 }
 
