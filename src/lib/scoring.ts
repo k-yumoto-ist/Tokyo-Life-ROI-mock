@@ -1,4 +1,4 @@
-import type { MyRoiStats, Plan, Satisfaction, UserProfile } from "../types";
+import type { AnnualIncomeBand, MyRoiStats, Plan, Satisfaction, UserProfile, WorkStyle } from "../types";
 
 export function selectedPlanOrDefault(plans: Plan[], selectedPlanId: string | null) {
   return plans.find((plan) => plan.id === selectedPlanId) ?? plans.find((plan) => plan.recommended) ?? plans[0];
@@ -34,6 +34,23 @@ export function formatYen(value: number) {
     currency: "JPY",
     maximumFractionDigits: 0
   }).format(value);
+}
+
+export function calculateAutoHourlyValue(annualIncomeBand: AnnualIncomeBand, workStyle: WorkStyle) {
+  const baseByIncome: Record<AnnualIncomeBand, number> = {
+    under300: 1200,
+    "300to500": 1800,
+    "500to700": 2500,
+    "700to1000": 3200,
+    over1000: 5000,
+    noAnswer: 2500
+  };
+  const workStyleMultiplier: Record<WorkStyle, number> = {
+    regular: 1,
+    busy: 1.15,
+    flexible: 0.9
+  };
+  return Math.round((baseByIncome[annualIncomeBand] * workStyleMultiplier[workStyle]) / 100) * 100;
 }
 
 export function buildProfileSummary(profile: UserProfile) {

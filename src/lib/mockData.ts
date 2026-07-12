@@ -1,4 +1,5 @@
 import type {
+  AnnualIncomeBand,
   DefaultPriority,
   FeedbackState,
   GoalChip,
@@ -7,7 +8,8 @@ import type {
   PersistedLoopState,
   Plan,
   TransportMode,
-  UserProfile
+  UserProfile,
+  WorkStyle
 } from "../types";
 
 export const loopStorageKey = "tokyo-life-roi-loop-v1";
@@ -83,6 +85,9 @@ export const initialFeedback: FeedbackState = {
 export const initialProfile: UserProfile = {
   homeArea: "千葉県松戸市",
   activityArea: "東京都千代田区・中央区",
+  annualIncomeBand: "700to1000",
+  workStyle: "regular",
+  hourlyValueMode: "auto",
   hourlyValue: 3200,
   familyType: "子どもあり",
   adults: 2,
@@ -116,6 +121,21 @@ export const defaultPriorityLabels: Record<DefaultPriority, string> = {
   comfort: "快適に過ごしたい",
   family: "家族で動きやすくしたい",
   health: "健康的に行動したい"
+};
+
+export const annualIncomeBandLabels: Record<AnnualIncomeBand, string> = {
+  under300: "300万円未満",
+  "300to500": "300〜500万円",
+  "500to700": "500〜700万円",
+  "700to1000": "700〜1,000万円",
+  over1000: "1,000万円以上",
+  noAnswer: "回答しない"
+};
+
+export const workStyleLabels: Record<WorkStyle, string> = {
+  regular: "標準的",
+  busy: "忙しめ",
+  flexible: "調整しやすい"
 };
 
 export const feedbackTags = [

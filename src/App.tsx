@@ -24,6 +24,7 @@ import {
   Users
 } from "lucide-react";
 import {
+  annualIncomeBandLabels,
   defaultPriorityLabels,
   feedbackTags,
   goals,
@@ -32,10 +33,25 @@ import {
   insights,
   loopStorageKey,
   plans,
-  transportModeLabels
+  transportModeLabels,
+  workStyleLabels
 } from "./lib/mockData";
-import { buildProfileSummary, buildRecommendationReason, formatYen, selectedPlanOrDefault, updateStatsAfterFeedback } from "./lib/scoring";
-import type { DefaultPriority, FamilyType, GoalChip, GoalId, PersistedLoopState, Plan, Satisfaction, TransportMode, UserProfile, View } from "./types";
+import { buildProfileSummary, buildRecommendationReason, calculateAutoHourlyValue, formatYen, selectedPlanOrDefault, updateStatsAfterFeedback } from "./lib/scoring";
+import type {
+  AnnualIncomeBand,
+  DefaultPriority,
+  FamilyType,
+  GoalChip,
+  GoalId,
+  HourlyValueMode,
+  PersistedLoopState,
+  Plan,
+  Satisfaction,
+  TransportMode,
+  UserProfile,
+  View,
+  WorkStyle
+} from "./types";
 
 const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "home", label: "ホーム", icon: <HomeIcon size={21} /> },
@@ -45,7 +61,8 @@ const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
 ];
 
 const familyTypes: FamilyType[] = ["一人暮らし", "パートナーと二人", "子どもあり", "親との同居", "その他"];
-const hourlyValueOptions = [2000, 3200, 4000, 5000];
+const annualIncomeBands = Object.keys(annualIncomeBandLabels) as AnnualIncomeBand[];
+const workStyles = Object.keys(workStyleLabels) as WorkStyle[];
 const childAgeGroups = ["未就学児", "小学生", "中高生"];
 const transportModes = Object.keys(transportModeLabels) as TransportMode[];
 const priorityOptions = Object.keys(defaultPriorityLabels) as DefaultPriority[];
@@ -452,10 +469,53 @@ function FeedbackSavedScreen({ stats, onMyRoi, onHome }: { stats: PersistedLoopS
 }
 
 function ProfileScreen({ profile, onSave, onCancel }: { profile: UserProfile; onSave: (profile: UserProfile) => void; onCancel: () => void }) {
-  const [draft, setDraft] = useState(profile);
+  const [draft, setDraft] = useState(() =>
+    profile.hourlyValueMode === "auto"
+      ? { ...profile, hourlyValue: calculateAutoHourlyValue(profile.annualIncomeBand, profile.workStyle) }
+      : profile
+  );
+  const [showCalculation, setShowCalculation] = useState(false);
+  const [showTimeEditor, setShowTimeEditor] = useState(false);
+
+  const autoHourlyValue = calculateAutoHourlyValue(draft.annualIncomeBand, draft.workStyle);
 
   function setField<K extends keyof UserProfile>(key: K, value: UserProfile[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateAutoBasis(updates: Partial<Pick<UserProfile, "annualIncomeBand" | "workStyle">>) {
+    setDraft((current) => {
+      const next = { ...current, ...updates };
+      return {
+        ...next,
+        hourlyValue: next.hourlyValueMode === "auto" ? calculateAutoHourlyValue(next.annualIncomeBand, next.workStyle) : next.hourlyValue
+      };
+    });
+  }
+
+  function setHourlyValueMode(mode: HourlyValueMode) {
+    setDraft((current) => ({
+      ...current,
+      hourlyValueMode: mode,
+      hourlyValue: mode === "auto" ? calculateAutoHourlyValue(current.annualIncomeBand, current.workStyle) : current.hourlyValue
+    }));
+  }
+
+  function changeManualHourlyValue(delta: number) {
+    setDraft((current) => ({
+      ...current,
+      hourlyValueMode: "manual",
+      hourlyValue: Math.max(500, Math.min(20000, current.hourlyValue + delta))
+    }));
+  }
+
+  function setManualHourlyValue(value: number) {
+    const rounded = Math.round(value / 500) * 500;
+    setDraft((current) => ({
+      ...current,
+      hourlyValueMode: "manual",
+      hourlyValue: Math.max(500, Math.min(20000, Number.isFinite(rounded) ? rounded : current.hourlyValue))
+    }));
   }
 
   function toggleTransport(mode: TransportMode) {
@@ -494,18 +554,79 @@ function ProfileScreen({ profile, onSave, onCancel }: { profile: UserProfile; on
         <p className="field-help">詳細な住所ではなく、市区町村やエリア単位で設定します。</p>
       </SettingsCard>
 
-      <SettingsCard icon={<Coins size={20} />} title="あなたの時間価値" value={`1時間あたり ${formatYen(draft.hourlyValue)}`}>
-        <div className="choice-grid two-column" role="group" aria-label="時間価値を選択">
-          {hourlyValueOptions.map((value) => (
+      <SettingsCard icon={<Coins size={20} />} title="年収帯・働き方" value={`${annualIncomeBandLabels[draft.annualIncomeBand]} / ${workStyleLabels[draft.workStyle]}`}>
+        <p className="field-help compact-help">正確な金額ではなく、時間価値の推定にのみ使用します。</p>
+        <div className="choice-grid two-column profile-choice-block" role="group" aria-label="年収帯を選択">
+          {annualIncomeBands.map((incomeBand) => (
             <ChoiceButton
-              key={value}
-              active={draft.hourlyValue === value}
-              label={value >= 5000 ? "5,000円以上" : `${value.toLocaleString("ja-JP")}円/h`}
-              onClick={() => setField("hourlyValue", value)}
+              key={incomeBand}
+              active={draft.annualIncomeBand === incomeBand}
+              label={annualIncomeBandLabels[incomeBand]}
+              onClick={() => updateAutoBasis({ annualIncomeBand: incomeBand })}
             />
           ))}
         </div>
-        <p className="field-help">移動時間や待ち時間を金額換算し、あなたにとって得な選択を計算します。</p>
+        <div className="choice-grid three-column profile-choice-block" role="group" aria-label="働き方を選択">
+          {workStyles.map((workStyle) => (
+            <ChoiceButton
+              key={workStyle}
+              active={draft.workStyle === workStyle}
+              label={workStyleLabels[workStyle]}
+              onClick={() => updateAutoBasis({ workStyle })}
+            />
+          ))}
+        </div>
+      </SettingsCard>
+
+      <SettingsCard icon={<Clock3 size={20} />} title="あなたの1時間の目安" value={`1時間あたり ${formatYen(draft.hourlyValue)}`}>
+        <div className="hourly-value-summary">
+          <span>{draft.hourlyValueMode === "auto" ? "自動計算" : "手動設定"}</span>
+          <strong>1時間あたり {formatYen(draft.hourlyValue)}</strong>
+          <p>年収帯や働き方をもとに自動計算しています</p>
+        </div>
+        <p className="field-help">移動時間や待ち時間を比較するための目安です。年収帯などから自動計算しますが、あなたの感覚に合わせて変更できます。</p>
+        <div className="time-value-actions">
+          <button className="text-action-button" onClick={() => setShowCalculation((value) => !value)} aria-expanded={showCalculation}>
+            計算の考え方を見る
+          </button>
+          <button className="text-action-button" onClick={() => setShowTimeEditor((value) => !value)} aria-expanded={showTimeEditor}>
+            自分で変更する
+          </button>
+        </div>
+        {showCalculation && (
+          <div className="calculation-panel">
+            <p>年収帯ごとの目安額に、働き方の忙しさを反映しています。現在の自動計算値は {formatYen(autoHourlyValue)} / 時間です。</p>
+          </div>
+        )}
+        {showTimeEditor && (
+          <div className="time-editor-panel">
+            <div className="choice-grid two-column" role="group" aria-label="時間価値の設定方法を選択">
+              <ChoiceButton active={draft.hourlyValueMode === "auto"} label="自動計算を使用する" onClick={() => setHourlyValueMode("auto")} />
+              <ChoiceButton active={draft.hourlyValueMode === "manual"} label="自分で設定する" onClick={() => setHourlyValueMode("manual")} />
+            </div>
+            {draft.hourlyValueMode === "manual" && (
+              <>
+                <div className="manual-value-row">
+                  <button onClick={() => changeManualHourlyValue(-500)} aria-label="時間価値を500円下げる">-</button>
+                  <strong>{formatYen(draft.hourlyValue)}</strong>
+                  <button onClick={() => changeManualHourlyValue(500)} aria-label="時間価値を500円上げる">+</button>
+                </div>
+                <label className="profile-field">
+                  <span>金額の直接入力（500円単位）</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    step={500}
+                    min={500}
+                    max={20000}
+                    value={draft.hourlyValue}
+                    onChange={(event) => setManualHourlyValue(Number(event.target.value))}
+                  />
+                </label>
+              </>
+            )}
+          </div>
+        )}
       </SettingsCard>
 
       <SettingsCard icon={<Users size={20} />} title="家族構成" value={draft.children > 0 ? `大人${draft.adults}人・子ども${draft.children}人・${draft.childAgeGroup}` : draft.familyType}>
@@ -561,7 +682,15 @@ function ProfileScreen({ profile, onSave, onCancel }: { profile: UserProfile; on
       </SettingsCard>
 
       <div className="profile-actions">
-        <button className="primary-button action-wide" onClick={() => onSave(draft)}>
+        <button
+          className="primary-button action-wide"
+          onClick={() =>
+            onSave({
+              ...draft,
+              hourlyValue: draft.hourlyValueMode === "auto" ? calculateAutoHourlyValue(draft.annualIncomeBand, draft.workStyle) : draft.hourlyValue
+            })
+          }
+        >
           <Save size={18} /> 設定を保存
         </button>
         <button className="secondary-button action-wide" onClick={onCancel}>変更をキャンセル</button>

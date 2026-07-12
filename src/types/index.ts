@@ -5,6 +5,9 @@ export type Satisfaction = "good" | "ok" | "bad" | null;
 export type FamilyType = "一人暮らし" | "パートナーと二人" | "子どもあり" | "親との同居" | "その他";
 export type TransportMode = "train" | "bus" | "car" | "bike" | "walk";
 export type DefaultPriority = "time" | "cost" | "quiet" | "comfort" | "family" | "health";
+export type AnnualIncomeBand = "under300" | "300to500" | "500to700" | "700to1000" | "over1000" | "noAnswer";
+export type WorkStyle = "regular" | "busy" | "flexible";
+export type HourlyValueMode = "auto" | "manual";
 
 export type GoalChip = {
   id: GoalId;
@@ -46,6 +49,9 @@ export type FeedbackState = {
 export type UserProfile = {
   homeArea: string;
   activityArea: string;
+  annualIncomeBand: AnnualIncomeBand;
+  workStyle: WorkStyle;
+  hourlyValueMode: HourlyValueMode;
   hourlyValue: number;
   familyType: FamilyType;
   adults: number;

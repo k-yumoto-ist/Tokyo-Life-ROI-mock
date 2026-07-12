@@ -852,6 +852,14 @@ button:disabled {
   font-weight: 850;
 }
 
+.compact-help {
+  margin-bottom: 8px;
+}
+
+.profile-choice-block {
+  margin-top: 8px;
+}
+
 .choice-grid {
   display: grid;
   gap: 8px;
@@ -886,6 +894,93 @@ button:disabled {
   border: 2px solid #0b7cff;
   background: #edf6ff;
   color: #075fbd;
+}
+
+.hourly-value-summary {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d7e8f7;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eef7ff, #f3fff8);
+  padding: 12px;
+}
+
+.hourly-value-summary span {
+  width: fit-content;
+  border-radius: 999px;
+  background: #0b7cff;
+  color: white;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.hourly-value-summary strong {
+  color: #10234d;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.hourly-value-summary p,
+.calculation-panel p {
+  margin: 0;
+  color: #526b82;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.55;
+}
+
+.time-value-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.text-action-button {
+  min-height: 40px;
+  border: 1px solid #cfe0ef;
+  border-radius: 13px;
+  background: white;
+  color: #0b73d9;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.calculation-panel,
+.time-editor-panel {
+  margin-top: 10px;
+  border: 1px solid #deebf6;
+  border-radius: 15px;
+  background: #f8fbff;
+  padding: 10px;
+}
+
+.manual-value-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.manual-value-row button {
+  min-height: 42px;
+  border: 1px solid #cfe0ef;
+  border-radius: 13px;
+  background: white;
+  color: #0b73d9;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.manual-value-row strong {
+  color: #10234d;
+  font-size: 20px;
+  font-weight: 950;
+  text-align: center;
 }
 
 .child-settings {
