@@ -254,6 +254,8 @@ function GoalChipButton({ goal, active, onClick }: { goal: GoalChip; active: boo
 }
 
 function RecommendationCard({ plan, reason, onStart, onPlans }: { plan: Plan; reason: string; onStart: () => void; onPlans: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <article className="recommendation-card">
       <div className="section-label">今のあなたにおすすめ ✨</div>
@@ -270,7 +272,10 @@ function RecommendationCard({ plan, reason, onStart, onPlans }: { plan: Plan; re
       </div>
       <div className="recommendation-reason">
         <strong>おすすめ理由</strong>
-        <p>{reason}</p>
+        <p className={expanded ? "is-expanded" : ""}>{reason}</p>
+        <button className="reason-toggle" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
+          {expanded ? "理由を閉じる" : "理由を詳しく見る"}
+        </button>
       </div>
       <div className="metric-grid">
         <MetricItem icon={<Clock3 size={18} />} value={`${plan.savedMinutes}分`} label="短縮" tone="blue" />
