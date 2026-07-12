@@ -8,6 +8,61 @@ export type DefaultPriority = "time" | "cost" | "quiet" | "comfort" | "family" |
 export type AnnualIncomeBand = "under300" | "300to500" | "500to700" | "700to1000" | "over1000" | "noAnswer";
 export type WorkStyle = "regular" | "busy" | "flexible";
 export type HourlyValueMode = "auto" | "manual";
+export type DecisionMode = "route" | "outing";
+export type Companion = "solo" | "family" | "children" | "partner" | "friends";
+export type RoutePriority = "fast" | "cheap" | "easy" | "avoidCrowd" | "avoidRain" | "lessWalk";
+export type OutingIntent =
+  | "playWithChildren"
+  | "refresh"
+  | "relax"
+  | "eat"
+  | "exercise"
+  | "newPlace"
+  | "free"
+  | "weatherSafe";
+export type TimeBudget = "oneHour" | "twoThreeHours" | "halfDay" | "fullDay";
+export type BudgetOption = "free" | "under3000" | "under5000" | "under10000" | "noLimit";
+export type TravelRange = "within15" | "within30" | "within60" | "noLimit";
+
+export type RouteForm = {
+  fromType: "current" | "home" | "custom";
+  fromText: string;
+  destination: string;
+  departureAt: string;
+  companion: Companion;
+  priorities: RoutePriority[];
+};
+
+export type OutingForm = {
+  intents: OutingIntent[];
+  timeBudget: TimeBudget;
+  budget: BudgetOption;
+  companion: Companion;
+  travelRange: TravelRange;
+  priorities: RoutePriority[];
+};
+
+export type DecisionMetric = {
+  label: string;
+  value: string;
+};
+
+export type DecisionCandidate = {
+  title: string;
+  subtitle: string;
+  label: string;
+  roi: number;
+  reason: string;
+  metrics: DecisionMetric[];
+};
+
+export type DecisionResult = {
+  mode: DecisionMode;
+  heading: string;
+  main: DecisionCandidate;
+  alternatives: DecisionCandidate[];
+  dataSources: string[];
+};
 
 export type GoalChip = {
   id: GoalId;

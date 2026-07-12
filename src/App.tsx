@@ -25,20 +25,39 @@ import {
 } from "lucide-react";
 import {
   annualIncomeBandLabels,
+  budgetLabels,
+  companionLabels,
+  decisionDataSources,
   defaultPriorityLabels,
+  destinationSuggestions,
   feedbackTags,
   goals,
   initialFeedback,
   initialLoopState,
+  initialOutingForm,
+  initialRouteForm,
   insights,
   loopStorageKey,
+  outingCandidateSets,
+  outingIntentLabels,
+  outingLoadingMessages,
   plans,
+  routeCandidateSets,
+  routeLoadingMessages,
+  routePriorityLabels,
+  timeBudgetLabels,
   transportModeLabels,
+  travelRangeLabels,
   workStyleLabels
 } from "./lib/mockData";
 import { buildProfileSummary, buildRecommendationReason, calculateAutoHourlyValue, formatYen, selectedPlanOrDefault, updateStatsAfterFeedback } from "./lib/scoring";
 import type {
   AnnualIncomeBand,
+  BudgetOption,
+  Companion,
+  DecisionCandidate,
+  DecisionMode,
+  DecisionResult,
   DefaultPriority,
   FamilyType,
   GoalChip,
@@ -46,8 +65,14 @@ import type {
   HourlyValueMode,
   PersistedLoopState,
   Plan,
+  OutingForm,
+  OutingIntent,
+  RouteForm,
+  RoutePriority,
   Satisfaction,
+  TimeBudget,
   TransportMode,
+  TravelRange,
   UserProfile,
   View,
   WorkStyle
@@ -66,6 +91,12 @@ const workStyles = Object.keys(workStyleLabels) as WorkStyle[];
 const childAgeGroups = ["未就学児", "小学生", "中高生"];
 const transportModes = Object.keys(transportModeLabels) as TransportMode[];
 const priorityOptions = Object.keys(defaultPriorityLabels) as DefaultPriority[];
+const companions = Object.keys(companionLabels) as Companion[];
+const routePriorities = Object.keys(routePriorityLabels) as RoutePriority[];
+const outingIntents = Object.keys(outingIntentLabels) as OutingIntent[];
+const timeBudgets = Object.keys(timeBudgetLabels) as TimeBudget[];
+const budgetOptions = Object.keys(budgetLabels) as BudgetOption[];
+const travelRanges = Object.keys(travelRangeLabels) as TravelRange[];
 
 const goalIcons: Record<GoalId, React.ReactNode> = {
   time: <Clock3 size={17} />,
@@ -79,6 +110,11 @@ export default function App() {
   const [state, setState] = useState<PersistedLoopState>(initialLoopState);
   const [showMoreTags, setShowMoreTags] = useState(false);
   const [toast, setToast] = useState("");
+  const [decisionMode, setDecisionMode] = useState<DecisionMode>("outing");
+  const [routeForm, setRouteForm] = useState<RouteForm>(initialRouteForm);
+  const [outingForm, setOutingForm] = useState<OutingForm>(initialOutingForm);
+  const [decisionResult, setDecisionResult] = useState<DecisionResult | null>(null);
+  const [loadingStep, setLoadingStep] = useState(-1);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(loopStorageKey);
@@ -104,6 +140,7 @@ export default function App() {
   const selectedPlan = useMemo(() => selectedPlanOrDefault(plans, state.selectedPlanId), [state.selectedPlanId]);
   const recommendedPlan = plans.find((plan) => plan.recommended) ?? plans[0];
   const recommendationReason = useMemo(() => buildRecommendationReason(state.profile, recommendedPlan), [recommendedPlan, state.profile]);
+  const isDecisionLoading = loadingStep >= 0;
 
   function selectGoal(goal: GoalId) {
     setState((current) => ({ ...current, selectedGoal: goal }));
@@ -160,6 +197,20 @@ export default function App() {
     window.setTimeout(() => setToast(""), 1800);
   }
 
+  function runDecisionSearch(mode: DecisionMode) {
+    setDecisionMode(mode);
+    setDecisionResult(null);
+    setLoadingStep(0);
+    const messages = mode === "route" ? routeLoadingMessages : outingLoadingMessages;
+    messages.forEach((_, index) => {
+      window.setTimeout(() => setLoadingStep(index), index * 520);
+    });
+    window.setTimeout(() => {
+      setDecisionResult(mode === "route" ? buildRouteResult(routeForm) : buildOutingResult(outingForm));
+      setLoadingStep(-1);
+    }, messages.length * 520 + 180);
+  }
+
   return (
     <div className="min-h-[100dvh] bg-[#edf7ff] text-ink">
       <main className="app-shell">
@@ -171,10 +222,20 @@ export default function App() {
               recommendedPlan={recommendedPlan}
               profile={state.profile}
               recommendationReason={recommendationReason}
+              decisionMode={decisionMode}
+              routeForm={routeForm}
+              outingForm={outingForm}
+              decisionResult={decisionResult}
+              loadingStep={loadingStep}
+              isDecisionLoading={isDecisionLoading}
               onGoal={selectGoal}
               onStart={() => startAction(recommendedPlan)}
               onPlans={() => setView("plans")}
               onProfile={() => setView("profile")}
+              onMode={setDecisionMode}
+              onRouteForm={setRouteForm}
+              onOutingForm={setOutingForm}
+              onSearch={runDecisionSearch}
             />
           )}
           {view === "plans" && (
@@ -209,43 +270,106 @@ export default function App() {
   );
 }
 
+function buildRouteResult(form: RouteForm): DecisionResult {
+  const key = form.priorities.includes("cheap")
+    ? "cheap"
+    : form.priorities.some((priority) => priority === "easy" || priority === "lessWalk" || priority === "avoidRain")
+      ? "easy"
+      : "balanced";
+  const selected = routeCandidateSets[key];
+  const fallbackAlternatives = routeCandidateSets.balanced.alternatives.filter((candidate) => candidate.title !== selected.main.title);
+  return {
+    mode: "route",
+    heading: "あなたへのおすすめ",
+    main: selected.main,
+    alternatives: selected.alternatives.length ? selected.alternatives : fallbackAlternatives,
+    dataSources: decisionDataSources
+  };
+}
+
+function buildOutingResult(form: OutingForm): DecisionResult {
+  const key = form.intents.includes("free") || form.budget === "free"
+    ? "free"
+    : form.intents.includes("relax") || form.intents.includes("refresh") || form.intents.includes("eat")
+      ? "relax"
+      : "children";
+  const selected = outingCandidateSets[key];
+  const fallbackAlternatives = outingCandidateSets.children.alternatives.filter((candidate) => candidate.title !== selected.main.title);
+  return {
+    mode: "outing",
+    heading: "今日のおすすめ",
+    main: selected.main,
+    alternatives: selected.alternatives.length ? selected.alternatives : fallbackAlternatives,
+    dataSources: decisionDataSources
+  };
+}
+
+function toggleItem<T extends string>(items: T[], item: T) {
+  return items.includes(item) ? items.filter((value) => value !== item) : [...items, item];
+}
+
 function HomeScreen({
   selectedGoal,
   stats,
   recommendedPlan,
   profile,
   recommendationReason,
+  decisionMode,
+  routeForm,
+  outingForm,
+  decisionResult,
+  loadingStep,
+  isDecisionLoading,
   onGoal,
   onStart,
   onPlans,
-  onProfile
+  onProfile,
+  onMode,
+  onRouteForm,
+  onOutingForm,
+  onSearch
 }: {
   selectedGoal: GoalId;
   stats: PersistedLoopState["stats"];
   recommendedPlan: Plan;
   profile: UserProfile;
   recommendationReason: string;
+  decisionMode: DecisionMode;
+  routeForm: RouteForm;
+  outingForm: OutingForm;
+  decisionResult: DecisionResult | null;
+  loadingStep: number;
+  isDecisionLoading: boolean;
   onGoal: (goal: GoalId) => void;
   onStart: () => void;
   onPlans: () => void;
   onProfile: () => void;
+  onMode: (mode: DecisionMode) => void;
+  onRouteForm: React.Dispatch<React.SetStateAction<RouteForm>>;
+  onOutingForm: React.Dispatch<React.SetStateAction<OutingForm>>;
+  onSearch: (mode: DecisionMode) => void;
 }) {
+  const loadingMessages = decisionMode === "route" ? routeLoadingMessages : outingLoadingMessages;
+
   return (
     <section className="screen-content home-hero">
       <header className="top-bar">
         <div>
           <h1 className="brand-title">Tokyo Life ROI</h1>
-          <p className="today-question">今日はどうしたい?</p>
+          <p className="today-question">今日は、何を決めますか?</p>
         </div>
         <button className="round-icon-button" aria-label="個人設定を開く" onClick={onProfile}>
           <UserRound size={20} />
         </button>
       </header>
 
-      <div className="goal-chip-row" aria-label="目的を選択">
-        {goals.map((goal) => (
-          <GoalChipButton key={goal.id} goal={goal} active={selectedGoal === goal.id} onClick={() => onGoal(goal.id)} />
-        ))}
+      <div className="mode-tabs" role="tablist" aria-label="決めたいことを選択">
+        <button className={decisionMode === "route" ? "is-active" : ""} onClick={() => onMode("route")} role="tab" aria-selected={decisionMode === "route"}>
+          行き方を決める
+        </button>
+        <button className={decisionMode === "outing" ? "is-active" : ""} onClick={() => onMode("outing")} role="tab" aria-selected={decisionMode === "outing"}>
+          過ごし方を決める
+        </button>
       </div>
 
       <button className="profile-summary-button" onClick={onProfile} aria-label="個人設定を確認・変更">
@@ -254,8 +378,233 @@ function HomeScreen({
         <ChevronRight size={16} />
       </button>
 
-      <RecommendationCard plan={recommendedPlan} reason={recommendationReason} onStart={onStart} onPlans={onPlans} />
+      {decisionMode === "route" ? (
+        <RouteDecisionForm form={routeForm} onChange={onRouteForm} onSearch={() => onSearch("route")} />
+      ) : (
+        <OutingDecisionForm form={outingForm} onChange={onOutingForm} onSearch={() => onSearch("outing")} />
+      )}
+
+      {isDecisionLoading && <DecisionLoading message={loadingMessages[Math.max(0, loadingStep)]} />}
+      {decisionResult && !isDecisionLoading && <DecisionResultPanel result={decisionResult} profile={profile} onStart={onStart} />}
+
+      <section className="legacy-entry-card">
+        <div>
+          <strong>いつもの提案も確認できます</strong>
+          <p>過去の振り返りをもとにした移動プラン比較へ進みます。</p>
+        </div>
+        <button className="mini-link-button" onClick={onPlans}>提案を見る</button>
+      </section>
+
       <MyRoiSummary stats={stats} compact />
+    </section>
+  );
+}
+
+function RouteDecisionForm({ form, onChange, onSearch }: { form: RouteForm; onChange: React.Dispatch<React.SetStateAction<RouteForm>>; onSearch: () => void }) {
+  return (
+    <article className="decision-card">
+      <p className="decision-copy">目的地までの、あなたに合った行き方を比較します</p>
+      <div className="source-grid" role="group" aria-label="出発地を選択">
+        {[
+          ["current", "現在地"],
+          ["home", "自宅"],
+          ["custom", "任意入力"]
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            className={form.fromType === value ? "is-active" : ""}
+            onClick={() => onChange((current) => ({ ...current, fromType: value as RouteForm["fromType"] }))}
+            aria-pressed={form.fromType === value}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {form.fromType === "custom" && (
+        <label className="compact-field">
+          <span>出発地</span>
+          <input value={form.fromText} onChange={(event) => onChange((current) => ({ ...current, fromText: event.target.value }))} placeholder="例：日本橋駅" />
+        </label>
+      )}
+      <label className="compact-field">
+        <span>目的地</span>
+        <input value={form.destination} onChange={(event) => onChange((current) => ({ ...current, destination: event.target.value }))} placeholder="例：東京駅" />
+      </label>
+      <div className="suggestion-row" aria-label="目的地候補">
+        {destinationSuggestions.map((suggestion) => (
+          <button key={suggestion} onClick={() => onChange((current) => ({ ...current, destination: suggestion }))}>{suggestion}</button>
+        ))}
+      </div>
+      <label className="compact-field">
+        <span>出発日時</span>
+        <input value={form.departureAt} onChange={(event) => onChange((current) => ({ ...current, departureAt: event.target.value }))} />
+      </label>
+      <ChipGroup label="誰と行くか">
+        {companions.map((companion) => (
+          <ChipButton key={companion} active={form.companion === companion} label={companionLabels[companion]} onClick={() => onChange((current) => ({ ...current, companion }))} />
+        ))}
+      </ChipGroup>
+      <ChipGroup label="今日優先したいこと">
+        {routePriorities.map((priority) => (
+          <ChipButton
+            key={priority}
+            active={form.priorities.includes(priority)}
+            label={routePriorityLabels[priority]}
+            onClick={() => onChange((current) => ({ ...current, priorities: toggleItem(current.priorities, priority) }))}
+          />
+        ))}
+      </ChipGroup>
+      <button className="primary-button action-wide" onClick={onSearch}>最適な行き方を調べる</button>
+    </article>
+  );
+}
+
+function OutingDecisionForm({ form, onChange, onSearch }: { form: OutingForm; onChange: React.Dispatch<React.SetStateAction<OutingForm>>; onSearch: () => void }) {
+  return (
+    <article className="decision-card">
+      <p className="decision-copy">今日の目的や気分に合う行き先を提案します</p>
+      <ChipGroup label="やりたいこと">
+        {outingIntents.map((intent) => (
+          <ChipButton
+            key={intent}
+            active={form.intents.includes(intent)}
+            label={outingIntentLabels[intent]}
+            onClick={() => onChange((current) => ({ ...current, intents: toggleItem(current.intents, intent) }))}
+          />
+        ))}
+      </ChipGroup>
+      <SelectRow label="利用できる時間">
+        {timeBudgets.map((timeBudget) => (
+          <ChipButton key={timeBudget} active={form.timeBudget === timeBudget} label={timeBudgetLabels[timeBudget]} onClick={() => onChange((current) => ({ ...current, timeBudget }))} />
+        ))}
+      </SelectRow>
+      <SelectRow label="予算">
+        {budgetOptions.map((budget) => (
+          <ChipButton key={budget} active={form.budget === budget} label={budgetLabels[budget]} onClick={() => onChange((current) => ({ ...current, budget }))} />
+        ))}
+      </SelectRow>
+      <ChipGroup label="誰と行くか">
+        {companions.map((companion) => (
+          <ChipButton key={companion} active={form.companion === companion} label={companionLabels[companion]} onClick={() => onChange((current) => ({ ...current, companion }))} />
+        ))}
+      </ChipGroup>
+      <SelectRow label="移動可能時間">
+        {travelRanges.map((travelRange) => (
+          <ChipButton key={travelRange} active={form.travelRange === travelRange} label={travelRangeLabels[travelRange]} onClick={() => onChange((current) => ({ ...current, travelRange }))} />
+        ))}
+      </SelectRow>
+      <ChipGroup label="今日優先したいこと">
+        {routePriorities.map((priority) => (
+          <ChipButton
+            key={priority}
+            active={form.priorities.includes(priority)}
+            label={routePriorityLabels[priority]}
+            onClick={() => onChange((current) => ({ ...current, priorities: toggleItem(current.priorities, priority) }))}
+          />
+        ))}
+      </ChipGroup>
+      <button className="primary-button action-wide" onClick={onSearch}>おすすめの過ごし方を探す</button>
+    </article>
+  );
+}
+
+function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="chip-group">
+      <span>{label}</span>
+      <div className="decision-chip-row">{children}</div>
+    </div>
+  );
+}
+
+function SelectRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="select-row">
+      <span>{label}</span>
+      <div className="decision-chip-row compact">{children}</div>
+    </div>
+  );
+}
+
+function ChipButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button className={`decision-chip ${active ? "is-active" : ""}`} onClick={onClick} aria-pressed={active}>
+      {active && <CheckCircle2 size={13} />}
+      {label}
+    </button>
+  );
+}
+
+function DecisionLoading({ message }: { message: string }) {
+  return (
+    <article className="decision-loading" role="status">
+      <Sparkles size={20} />
+      <span>{message}</span>
+    </article>
+  );
+}
+
+function DecisionResultPanel({ result, profile, onStart }: { result: DecisionResult; profile: UserProfile; onStart: () => void }) {
+  return (
+    <section className="decision-result-panel">
+      <div className="ai-label"><Sparkles size={15} /> AIがあなたの条件に合わせて比較しました</div>
+      <DecisionCandidateCard candidate={result.main} featured />
+      <p className="roi-help">パーソナルROIは、移動時間、費用、混雑、疲労、満足度を総合して算出しています。</p>
+      <div className="personal-context">
+        <Info size={15} />
+        <span>時間価値 {profile.hourlyValue.toLocaleString("ja-JP")}円/h・{profile.children > 0 ? "子どもあり" : profile.familyType}・{profile.defaultPriorities.includes("quiet") ? "混雑回避重視" : "バランス重視"}を反映</span>
+      </div>
+      <div className="alternative-list">
+        <h2>他の候補</h2>
+        {result.alternatives.map((candidate) => (
+          <DecisionCandidateCard key={`${candidate.label}-${candidate.title}`} candidate={candidate} />
+        ))}
+      </div>
+      <DataSourceChips sources={result.dataSources} />
+      <button className="primary-button action-wide" onClick={onStart}>この案で行動</button>
+    </section>
+  );
+}
+
+function DecisionCandidateCard({ candidate, featured = false }: { candidate: DecisionCandidate; featured?: boolean }) {
+  return (
+    <article className={`decision-candidate ${featured ? "is-featured" : ""}`}>
+      <div className="candidate-head">
+        <div>
+          <span className="candidate-label">{candidate.label}</span>
+          <h2>{candidate.title}</h2>
+          <p>{candidate.subtitle}</p>
+        </div>
+        <RoiBadge score={candidate.roi} />
+      </div>
+      <div className="candidate-metrics">
+        {candidate.metrics.map((metric) => (
+          <MiniMetric key={`${candidate.title}-${metric.label}`} icon={<Info size={14} />} label={metric.label} value={metric.value} />
+        ))}
+      </div>
+      <p className="candidate-reason">{candidate.reason}</p>
+    </article>
+  );
+}
+
+function RoiBadge({ score }: { score: number }) {
+  return (
+    <div className="roi-badge" aria-label={`パーソナルROI ${score}点`}>
+      <strong>{score}</strong>
+      <span>ROI</span>
+    </div>
+  );
+}
+
+function DataSourceChips({ sources }: { sources: string[] }) {
+  return (
+    <section className="data-source-card">
+      <h2>今回の判断に使った情報</h2>
+      <div className="data-source-row">
+        {sources.map((source) => (
+          <span key={source}>{source}</span>
+        ))}
+      </div>
     </section>
   );
 }
