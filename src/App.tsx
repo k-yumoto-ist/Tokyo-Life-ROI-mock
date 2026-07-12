@@ -194,7 +194,11 @@ export default function App() {
   function saveProfile(profile: UserProfile) {
     setState((current) => ({ ...current, profile }));
     setView("home");
-    setToast("個人設定を更新しました");
+    showToast("個人設定を更新しました");
+  }
+
+  function showToast(message: string) {
+    setToast(message);
     window.setTimeout(() => setToast(""), 1800);
   }
 
@@ -270,8 +274,8 @@ export default function App() {
             <ChoiceCompleteScreen
               candidate={selectedDecision}
               mode={decisionMode}
-              onOpenRoute={() => setToast("外部地図を開く想定です")}
-              onAddSchedule={() => setToast("予定に追加しました")}
+              onOpenRoute={() => showToast("外部地図を開く想定です")}
+              onAddSchedule={() => showToast("予定に追加しました")}
               onReflect={reflectDecisionLater}
               onHome={() => setView("home")}
             />
