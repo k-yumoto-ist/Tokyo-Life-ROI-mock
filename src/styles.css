@@ -748,6 +748,7 @@ button:disabled {
 
 .profile-screen {
   background: linear-gradient(180deg, #f0f9ff 0, #ffffff 170px);
+  padding-bottom: calc(140px + env(safe-area-inset-bottom));
 }
 
 .profile-intro {
@@ -908,15 +909,11 @@ button:disabled {
 }
 
 .profile-actions {
-  position: sticky;
-  bottom: calc(74px + env(safe-area-inset-bottom));
-  z-index: 5;
   margin-top: 14px;
   border: 1px solid #e1ebf5;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.98);
   padding: 10px;
-  backdrop-filter: blur(12px);
 }
 
 .profile-actions .action-wide {
