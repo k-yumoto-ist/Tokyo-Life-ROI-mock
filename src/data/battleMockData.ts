@@ -20,6 +20,7 @@ export type BattlePlan = {
   satisfaction: number;
   roi: number;
   feature: string;
+  primaryStrength: string;
   strengths: string[];
   commentary: string;
   status: BattleStatus;
@@ -50,6 +51,7 @@ export const battlePlans: BattlePlan[] = [
     satisfaction: 82,
     roi: 92,
     feature: "待ち時間カット",
+    primaryStrength: "家族の移動負担が最も少ない",
     strengths: ["時間効率が高い", "子どもの負担が少ない", "帰宅後の時間を確保できる"],
     commentary: "近場速攻型が移動時間でリードしています。",
     status: { time: 94, saving: 56, quiet: 80, satisfaction: 82, family: 92 },
@@ -68,6 +70,7 @@ export const battlePlans: BattlePlan[] = [
     satisfaction: 78,
     roi: 88,
     feature: "無料スポット連携",
+    primaryStrength: "費用対効果が最も高い",
     strengths: ["費用対効果が高い", "無料施設を活用できる", "長時間過ごせる"],
     commentary: "節約じっくり型は費用対効果でリードしています。",
     status: { time: 82, saving: 98, quiet: 62, satisfaction: 78, family: 78 },
@@ -86,6 +89,7 @@ export const battlePlans: BattlePlan[] = [
     satisfaction: 96,
     roi: 90,
     feature: "特別体験ボーナス",
+    primaryStrength: "体験価値が最も高い",
     strengths: ["非日常体験", "子どもの記憶に残りやすい", "体験価値が高い"],
     commentary: "満足度全振り型は体験価値が高い一方、混雑が弱点です。",
     status: { time: 54, saving: 34, quiet: 42, satisfaction: 96, family: 75 },
@@ -99,6 +103,13 @@ export const battleLoadingMessages = [
   "あなたの時間価値を反映中",
   "家族構成と好みを反映中",
   "3つのプランを選定中",
+];
+
+export const battleJudgingMessages = [
+  "あなたの時間価値を反映",
+  "費用と移動負担を換算",
+  "混雑と満足度を比較",
+  "総合ROIを算出中",
 ];
 
 export const battleHistoryStorageKey = "tokyo-life-roi-battle-history";

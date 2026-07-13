@@ -48,9 +48,10 @@ export function BattlePlanCard({ plan, index, pushed, onPrevious, onNext, onPush
           <h2>{plan.title}</h2>
           <p>{plan.catchcopy}</p>
         </div>
-        <div className="battle-roi"><strong>{plan.roi}</strong><span>ROI</span></div>
       </div>
+      <p className="battle-destination">行き先: {plan.destination}</p>
       <span className="battle-feature">{plan.feature}</span>
+      <p className="battle-primary-strength"><strong>最大の強み</strong>{plan.primaryStrength}</p>
       <div className="battle-metrics">
         <Metric icon={<Clock3 size={14} />} label="移動" value={plan.travel} />
         <Metric icon={<Coins size={14} />} label="費用" value={plan.cost} />
@@ -58,7 +59,7 @@ export function BattlePlanCard({ plan, index, pushed, onPrevious, onNext, onPush
         <Metric icon={<Star size={14} />} label="満足度" value={String(plan.satisfaction)} />
       </div>
       <div className="battle-statuses">
-        {statusLabels.map(([key, label]) => <div key={key}><span>{label}</span><div><i style={{ width: `${plan.status[key]}%` }} /></div></div>)}
+        {statusLabels.map(([key, label]) => <div key={key}><span>{label}</span><div><i style={{ width: `${plan.status[key]}%` }} /></div><small>{Math.round(plan.status[key] / 20)} / 5</small></div>)}
       </div>
       <p className="battle-commentary">AI実況: {plan.commentary}</p>
       <div className="battle-card-actions">

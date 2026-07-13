@@ -1,11 +1,11 @@
 import { CheckCircle2, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { battleLoadingMessages, battlePlans, type BattleHistory, type BattlePlan } from "../../data/battleMockData";
+import { battleJudgingMessages, battleLoadingMessages, battlePlans, type BattleHistory, type BattlePlan } from "../../data/battleMockData";
 import { BattleConditionForm } from "./BattleConditionForm";
 import { BattleDecided, BattleResult } from "./BattleResult";
 import { BattlePlanCard } from "./BattlePlanCard";
 
-type Phase = "form" | "loading" | "battle" | "result" | "decided";
+type BattlePhase = "form" | "loading" | "compare" | "judging" | "result" | "decided";
 
 type Props = {
   onComplete: (history: BattleHistory) => void;
@@ -13,8 +13,9 @@ type Props = {
 };
 
 export function BattleVersion({ onComplete, onMyRoi }: Props) {
-  const [phase, setPhase] = useState<Phase>("form");
+  const [phase, setPhase] = useState<BattlePhase>("form");
   const [loadingIndex, setLoadingIndex] = useState(0);
+  const [judgingIndex, setJudgingIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [pushedPlanId, setPushedPlanId] = useState<BattlePlan["id"] | null>(null);
   const [detailPlan, setDetailPlan] = useState<BattlePlan | null>(null);
@@ -24,9 +25,16 @@ export function BattleVersion({ onComplete, onMyRoi }: Props) {
   useEffect(() => {
     if (phase !== "loading") return;
     const isLast = loadingIndex === battleLoadingMessages.length;
-    const timer = window.setTimeout(() => isLast ? setPhase("battle") : setLoadingIndex((index) => index + 1), isLast ? 500 : 260);
+    const timer = window.setTimeout(() => isLast ? setPhase("compare") : setLoadingIndex((index) => index + 1), isLast ? 500 : 260);
     return () => window.clearTimeout(timer);
   }, [loadingIndex, phase]);
+
+  useEffect(() => {
+    if (phase !== "judging") return;
+    const isLast = judgingIndex === battleJudgingMessages.length;
+    const timer = window.setTimeout(() => isLast ? setPhase("result") : setJudgingIndex((index) => index + 1), isLast ? 420 : 250);
+    return () => window.clearTimeout(timer);
+  }, [judgingIndex, phase]);
 
   useEffect(() => {
     if (!toast) return;
@@ -37,6 +45,11 @@ export function BattleVersion({ onComplete, onMyRoi }: Props) {
   function startBattle() {
     setLoadingIndex(0);
     setPhase("loading");
+  }
+
+  function startJudging() {
+    setJudgingIndex(0);
+    setPhase("judging");
   }
 
   function choosePlan(plan: BattlePlan) {
@@ -62,6 +75,7 @@ export function BattleVersion({ onComplete, onMyRoi }: Props) {
 
   if (phase === "form") return <BattleConditionForm onStart={startBattle} />;
   if (phase === "loading") return <BattleLoading message={battleLoadingMessages[Math.min(loadingIndex, battleLoadingMessages.length - 1)]} complete={loadingIndex === battleLoadingMessages.length} />;
+  if (phase === "judging") return <BattleJudging message={battleJudgingMessages[Math.min(judgingIndex, battleJudgingMessages.length - 1)]} complete={judgingIndex === battleJudgingMessages.length} />;
   if (phase === "result") return <BattleResult plans={battlePlans} pushedPlanId={pushedPlanId} onChoose={choosePlan} onRematch={rematch} />;
   if (phase === "decided" && decidedPlan) return <BattleDecided plan={decidedPlan} onAction={setToast} onMyRoi={onMyRoi} />;
 
@@ -81,10 +95,14 @@ export function BattleVersion({ onComplete, onMyRoi }: Props) {
         pushed={pushedPlanId === plan.id}
         onPrevious={() => setActiveIndex((activeIndex + battlePlans.length - 1) % battlePlans.length)}
         onNext={() => setActiveIndex((activeIndex + 1) % battlePlans.length)}
-        onPush={() => setPushedPlanId(plan.id)}
+        onPush={() => setPushedPlanId((current) => current === plan.id ? null : plan.id)}
         onDetails={() => setDetailPlan(plan)}
       />
-      <button className="primary-button action-wide battle-judge-button" onClick={() => setPhase("result")}><Sparkles size={18} />AI判定を見る</button>
+      <div className="battle-verdict-action">
+        <p>AI実況: あなたの時間価値と今回の優先条件を反映して、最終判定します</p>
+        <button className="primary-button action-wide battle-judge-button" onClick={startJudging}><Sparkles size={18} />AI判定を見る</button>
+        <small>総合ROIと勝者は判定後に公開されます</small>
+      </div>
       {detailPlan && <BattleDetailSheet plan={detailPlan} onClose={() => setDetailPlan(null)} />}
       {toast && <div className="battle-local-toast" role="status">{toast}</div>}
     </section>
@@ -93,6 +111,10 @@ export function BattleVersion({ onComplete, onMyRoi }: Props) {
 
 function BattleLoading({ message, complete }: { message: string; complete: boolean }) {
   return <section className="battle-loading" aria-live="polite"><Sparkles size={35} /><span>{message}</span><strong>{complete ? "3つのプランがエントリーしました" : "AIが条件を整理しています"}</strong><div><i /><i /><i /></div></section>;
+}
+
+function BattleJudging({ message, complete }: { message: string; complete: boolean }) {
+  return <section className="battle-loading battle-judging" aria-live="polite"><Sparkles size={35} /><span>{message}</span><strong>{complete ? "判定完了" : "AIが総合条件を判定しています"}</strong><div><i /><i /><i /></div></section>;
 }
 
 function BattleDetailSheet({ plan, onClose }: { plan: BattlePlan; onClose: () => void }) {
