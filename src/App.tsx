@@ -19,8 +19,10 @@ import { BottomNavigation } from "./components/common/BottomNavigation";
 import { SimpleVersion } from "./components/versions/SimpleVersion";
 import { FormVersion } from "./components/versions/FormVersion";
 import { ChatVersion } from "./components/versions/ChatVersion";
+import { BattleVersion } from "./components/versions/BattleVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
+import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
 
 type PrimaryTab = "home" | "roi" | "settings";
 type AppView = PrimaryTab | "choice" | "reflect";
@@ -48,6 +50,7 @@ const transportOptions = ["電車", "バス", "自動車", "自転車", "徒歩"
 const priorityOptions = ["時間を短縮したい", "費用を抑えたい", "混雑を避けたい", "快適に過ごしたい", "家族で動きやすくしたい", "健康的に行動したい"];
 const feedbackTags = ["早かった", "安かった", "空いていた", "子どもが楽しめた", "疲れなかった", "また使いたい"];
 const profileStorageKey = "tokyo-life-roi-profile";
+const versionStorageKey = "tokyo-life-roi-prototype-version";
 const defaultProfile: ProfileState = {
   homeArea: "千葉県松戸市",
   activityArea: "東京都千代田区・中央区",
@@ -63,7 +66,22 @@ const defaultProfile: ProfileState = {
 };
 
 function readVersionFromUrl() {
-  return normalizeVersion(new URLSearchParams(window.location.search).get("version"));
+  const versionFromUrl = new URLSearchParams(window.location.search).get("version");
+  if (versionFromUrl) return normalizeVersion(versionFromUrl);
+  try {
+    return normalizeVersion(window.localStorage.getItem(versionStorageKey));
+  } catch {
+    return normalizeVersion(null);
+  }
+}
+
+function readBattleHistory(): BattleHistory | null {
+  try {
+    const raw = window.localStorage.getItem(battleHistoryStorageKey);
+    return raw ? JSON.parse(raw) as BattleHistory : null;
+  } catch {
+    return null;
+  }
 }
 
 function readProfile(): ProfileState {
@@ -98,6 +116,7 @@ export default function App() {
   const [version, setVersion] = useState<VersionKey>(() => readVersionFromUrl());
   const [view, setView] = useState<AppView>("home");
   const [selectedCandidate, setSelectedCandidate] = useState<RoiCandidate | null>(null);
+  const [battleHistory, setBattleHistory] = useState<BattleHistory | null>(() => readBattleHistory());
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -109,16 +128,11 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const CurrentVersion = useMemo(() => {
-    if (version === "form") return FormVersion;
-    if (version === "chat") return ChatVersion;
-    return SimpleVersion;
-  }, [version]);
-
   function changeVersion(nextVersion: VersionKey) {
     const url = new URL(window.location.href);
     url.searchParams.set("version", nextVersion);
     window.history.pushState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
+    window.localStorage.setItem(versionStorageKey, nextVersion);
     setVersion(nextVersion);
     setView("home");
   }
@@ -133,6 +147,11 @@ export default function App() {
     setView("choice");
   }
 
+  function handleBattleComplete(history: BattleHistory) {
+    window.localStorage.setItem(battleHistoryStorageKey, JSON.stringify(history));
+    setBattleHistory(history);
+  }
+
   const navActive: PrimaryTab = view === "settings" ? "settings" : view === "roi" || view === "reflect" ? "roi" : "home";
 
   return (
@@ -141,7 +160,10 @@ export default function App() {
         <div className="phone-surface">
           <section className="screen-content home-hero prototype-screen">
             <Header version={version} onVersionChange={changeVersion} onSettings={() => setView("settings")} />
-            {view === "home" && <CurrentVersion onSelect={handleSelect} onSettings={() => setView("settings")} />}
+            {view === "home" && version === "simple" && <SimpleVersion onSelect={handleSelect} onSettings={() => setView("settings")} />}
+            {view === "home" && version === "form" && <FormVersion onSelect={handleSelect} />}
+            {view === "home" && version === "chat" && <ChatVersion onSelect={handleSelect} />}
+            {view === "home" && version === "battle" && <BattleVersion onComplete={handleBattleComplete} onMyRoi={() => setView("roi")} />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}
@@ -152,7 +174,7 @@ export default function App() {
                 onHome={() => setView("home")}
               />
             )}
-            {view === "roi" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} />}
+            {view === "roi" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
             {view === "reflect" && (
               <ReflectPanel
                 candidate={selectedCandidate}
@@ -305,7 +327,15 @@ function ReflectPanel({ candidate, onBack, onSave }: { candidate: RoiCandidate |
   );
 }
 
-function MyRoiPanel({ onReflect, selectedCandidate }: { onReflect: () => void; selectedCandidate: RoiCandidate | null }) {
+function MyRoiPanel({
+  onReflect,
+  selectedCandidate,
+  battleHistory,
+}: {
+  onReflect: () => void;
+  selectedCandidate: RoiCandidate | null;
+  battleHistory: BattleHistory | null;
+}) {
   return (
     <section className="version-panel">
       <h2 className="version-title">My ROI</h2>
@@ -327,6 +357,19 @@ function MyRoiPanel({ onReflect, selectedCandidate }: { onReflect: () => void; s
         <h3>混雑が少ない選択が好相性</h3>
         <p>空いている候補を選んだ日は、平均満足度が0.8高くなっています。</p>
       </article>
+      {battleHistory && (
+        <article className="battle-history-card">
+          <span>前回のAIバトル</span>
+          <h3>{battleHistory.selectedPlanTitle}</h3>
+          <p>AIおすすめ: {battleHistory.recommendedPlanTitle}</p>
+          <div>
+            <strong>{battleHistory.savedMinutes}分<span>獲得時間</span></strong>
+            <strong>¥{battleHistory.estimatedSavings.toLocaleString("ja-JP")}<span>節約見込み</span></strong>
+            <strong>{battleHistory.roi}<span>ROI</span></strong>
+          </div>
+          <small>満足度 {battleHistory.satisfaction} / 100 ・ 今月は先月より300 ROIポイント改善</small>
+        </article>
+      )}
       <article className="recent-list-card">
         <h2>最近の選択</h2>
         <button className="recent-row" onClick={onReflect}>
@@ -380,6 +423,7 @@ function SettingsPanel({
       <div className="profile-intro">
         <strong>個人設定</strong>
         <p>あなたに合った行動を提案するための基本情報です。最初に一度設定すると、毎日の提案に反映されます。</p>
+        <small>あなたの設定によって、同じ候補でもAIバトルの勝者が変わります。</small>
       </div>
 
       <article className="settings-card">
