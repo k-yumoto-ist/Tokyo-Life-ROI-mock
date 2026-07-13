@@ -19,6 +19,10 @@ export const versions = {
     label: "都市貢献",
     description: "あなたに良い選択を、東京の快適さにもつなげる",
   },
+  visual: {
+    label: "アイコン中心",
+    description: "アイコンと数値で、今の選択を比べる",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -26,7 +30,7 @@ export type VersionKey = keyof typeof versions;
 export const defaultVersion: VersionKey = "simple";
 
 export function normalizeVersion(value: string | null): VersionKey {
-  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "simple") {
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "simple") {
     return value;
   }
   return defaultVersion;

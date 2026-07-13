@@ -21,6 +21,7 @@ import { FormVersion } from "./components/versions/FormVersion";
 import { ChatVersion } from "./components/versions/ChatVersion";
 import { BattleVersion } from "./components/versions/BattleVersion";
 import { CityContributionVersion } from "./components/versions/CityContributionVersion";
+import { VisualHistory, VisualVersion } from "./components/versions/VisualVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
@@ -168,6 +169,7 @@ export default function App() {
             {view === "home" && version === "chat" && <ChatVersion onSelect={handleSelect} />}
             {view === "home" && version === "battle" && <BattleVersion onComplete={handleBattleComplete} onMyRoi={() => setView("roi")} />}
             {view === "home" && version === "city-contribution" && <CityContributionVersion />}
+            {view === "home" && version === "visual" && <VisualVersion />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}
@@ -178,7 +180,8 @@ export default function App() {
                 onHome={() => setView("home")}
               />
             )}
-            {view === "roi" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
+            {view === "roi" && version === "visual" && <VisualHistory />}
+            {view === "roi" && version !== "visual" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
             {view === "reflect" && (
               <ReflectPanel
                 candidate={selectedCandidate}
