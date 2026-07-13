@@ -4,9 +4,11 @@ import type { RoiCandidate } from "../../data/mockData";
 type Props = {
   candidate: RoiCandidate;
   featured?: boolean;
+  actionLabel?: string;
+  onSelect?: (candidate: RoiCandidate) => void;
 };
 
-export function RecommendationCard({ candidate, featured = false }: Props) {
+export function RecommendationCard({ candidate, featured = false, actionLabel = "これにする", onSelect }: Props) {
   return (
     <article className={`prototype-card ${featured ? "is-featured" : ""}`}>
       <div className="prototype-card-head">
@@ -29,6 +31,11 @@ export function RecommendationCard({ candidate, featured = false }: Props) {
         <CheckCircle2 size={14} />
         {candidate.reason}
       </p>
+      {onSelect && (
+        <button className={featured ? "primary-button action-wide" : "secondary-button action-wide"} onClick={() => onSelect(candidate)}>
+          {actionLabel}
+        </button>
+      )}
     </article>
   );
 }

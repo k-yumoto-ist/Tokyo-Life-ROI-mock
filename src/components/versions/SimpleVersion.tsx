@@ -4,6 +4,7 @@ import { fallbackSimpleKey, personalSummary, simpleGoals, simpleRecommendations 
 
 export function SimpleVersion() {
   const [goal, setGoal] = useState(fallbackSimpleKey);
+  const [selectedTitle, setSelectedTitle] = useState("");
   const recommendation = useMemo(() => simpleRecommendations[goal] ?? simpleRecommendations[fallbackSimpleKey], [goal]);
 
   return (
@@ -17,12 +18,13 @@ export function SimpleVersion() {
           </button>
         ))}
       </div>
-      <RecommendationCard candidate={recommendation.main} featured />
+      <RecommendationCard candidate={recommendation.main} featured onSelect={(candidate) => setSelectedTitle(candidate.title)} />
+      {selectedTitle && <p className="selection-toast-inline">{selectedTitle}を選びました。My ROIに記録できます。</p>}
       <details className="prototype-details">
         <summary>代替候補を見る</summary>
         <div className="compact-card-list">
           {recommendation.alternatives.slice(0, 2).map((candidate) => (
-            <RecommendationCard key={candidate.id} candidate={candidate} />
+            <RecommendationCard key={candidate.id} candidate={candidate} onSelect={(item) => setSelectedTitle(item.title)} />
           ))}
         </div>
       </details>

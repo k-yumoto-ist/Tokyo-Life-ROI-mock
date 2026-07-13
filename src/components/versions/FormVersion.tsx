@@ -11,7 +11,14 @@ export function FormVersion() {
   const [purpose, setPurpose] = useState("移動");
   const [companion, setCompanion] = useState("子どもと");
   const [crowd, setCrowd] = useState("できれば避けたい");
+  const [origin, setOrigin] = useState("自宅");
+  const [target, setTarget] = useState("上野動物園");
+  const [travelTime, setTravelTime] = useState("1時間以内");
+  const [budget, setBudget] = useState("5,000円以内");
+  const [returnTime, setReturnTime] = useState("18:00");
   const [searched, setSearched] = useState(false);
+  const [selectedTitle, setSelectedTitle] = useState("");
+  const candidates = getSortedCandidates(crowd, budget);
 
   return (
     <section className="version-panel">
@@ -25,11 +32,11 @@ export function FormVersion() {
         </Segment>
         <label className="prototype-field">
           <span>出発地</span>
-          <input defaultValue="自宅" />
+          <input value={origin} onChange={(event) => setOrigin(event.target.value)} />
         </label>
         <label className="prototype-field">
           <span>{hasDestination === "目的地あり" ? "目的地" : "エリア"}</span>
-          <input defaultValue={hasDestination === "目的地あり" ? "上野動物園" : "都内東部"} />
+          <input value={target} onChange={(event) => setTarget(event.target.value)} />
         </label>
         <Segment label="目的">
           {purposeOptions.map((item) => (
@@ -49,28 +56,43 @@ export function FormVersion() {
         <div className="two-fields">
           <label className="prototype-field">
             <span>移動可能時間</span>
-            <input defaultValue="1時間以内" />
+            <input value={travelTime} onChange={(event) => setTravelTime(event.target.value)} />
           </label>
           <label className="prototype-field">
             <span>予算</span>
-            <input defaultValue="5,000円以内" />
+            <input value={budget} onChange={(event) => setBudget(event.target.value)} />
           </label>
         </div>
         <label className="prototype-field">
           <span>帰宅希望時刻</span>
-          <input defaultValue="18:00" />
+          <input value={returnTime} onChange={(event) => setReturnTime(event.target.value)} />
         </label>
         <button className="primary-button action-wide" onClick={() => setSearched(true)}>候補を比較する</button>
       </div>
       {searched && (
         <div className="compact-card-list">
-          {formCandidates.map((candidate, index) => (
-            <RecommendationCard key={candidate.id} candidate={candidate} featured={index === 0} />
+          <p className="result-summary-line">{origin}から{target}へ。{companion}・{crowd}で比較しました。</p>
+          {candidates.map((candidate, index) => (
+            <RecommendationCard key={candidate.id} candidate={candidate} featured={index === 0} onSelect={(item) => setSelectedTitle(item.title)} />
           ))}
+          {selectedTitle && <p className="selection-toast-inline">{selectedTitle}を選びました。</p>}
         </div>
       )}
     </section>
   );
+}
+
+function getSortedCandidates(crowd: string, budget: string) {
+  if (budget.includes("3,000") || budget.includes("無料")) {
+    return [...formCandidates].sort((a, b) => Number(a.cost.replace(/\D/g, "")) - Number(b.cost.replace(/\D/g, "")));
+  }
+  if (crowd.includes("かなり") || crowd.includes("避けたい")) {
+    return [...formCandidates].sort((a, b) => {
+      const rank = { "低め": 0, "普通": 1, "やや混雑": 2 };
+      return (rank[a.crowd as keyof typeof rank] ?? 9) - (rank[b.crowd as keyof typeof rank] ?? 9);
+    });
+  }
+  return formCandidates;
 }
 
 function Segment({ label, children }: { label: string; children: React.ReactNode }) {

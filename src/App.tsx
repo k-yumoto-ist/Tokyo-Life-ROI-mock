@@ -82,6 +82,11 @@ function MyRoiPanel() {
 }
 
 function SettingsPanel({ currentVersion }: { currentVersion: VersionKey }) {
+  const estimatedHourlyValue = 3200;
+  const [hourlyValue, setHourlyValue] = useState(3200);
+  const [family, setFamily] = useState("家族4人");
+  const [mobility, setMobility] = useState("電車中心");
+
   return (
     <section className="version-panel">
       <h2 className="version-title">設定</h2>
@@ -91,9 +96,28 @@ function SettingsPanel({ currentVersion }: { currentVersion: VersionKey }) {
         <span>{versions[currentVersion].description}</span>
       </article>
       <article className="summary-card">
-        <p>個人設定</p>
-        <h3>時間価値 3,200円/h</h3>
-        <span>家族4人・電車中心・混雑回避を重視</span>
+        <p>時間価値</p>
+        <h3>現在の設定：{hourlyValue.toLocaleString("ja-JP")}円/h</h3>
+        <span>推定時間価値：{estimatedHourlyValue.toLocaleString("ja-JP")}円/h</span>
+        <div className="setting-controls">
+          <button onClick={() => setHourlyValue((value) => Math.max(500, value - 500))}>-500</button>
+          <button onClick={() => setHourlyValue((value) => value + 500)}>+500</button>
+          <button onClick={() => setHourlyValue(estimatedHourlyValue)}>推定値に戻す</button>
+        </div>
+      </article>
+      <article className="summary-card">
+        <p>基本プロフィール</p>
+        <div className="setting-controls">
+          {["ひとり", "家族4人", "子どもあり"].map((item) => (
+            <button key={item} className={family === item ? "is-active" : ""} onClick={() => setFamily(item)}>{item}</button>
+          ))}
+        </div>
+        <div className="setting-controls">
+          {["電車中心", "車も使う", "徒歩少なめ"].map((item) => (
+            <button key={item} className={mobility === item ? "is-active" : ""} onClick={() => setMobility(item)}>{item}</button>
+          ))}
+        </div>
+        <span>{family}・{mobility}・混雑回避を重視</span>
       </article>
       <article className="summary-card">
         <p>データ利用</p>

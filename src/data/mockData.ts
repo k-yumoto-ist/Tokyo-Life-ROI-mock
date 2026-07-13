@@ -101,6 +101,126 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         reason: "便利ですが、費用と混雑が少し上がります。"
       }
     ]
+  },
+  "短時間で済ませたい": {
+    main: {
+      id: "quick-errand",
+      title: "駅近で用事をまとめて済ませる",
+      subtitle: "移動少なめの短時間プラン",
+      time: "45分",
+      cost: "980円",
+      crowd: "普通",
+      satisfaction: "4.2",
+      roi: 87,
+      tag: "時短",
+      reason: "移動と待ち時間が短く、今日の時間価値では最も効率が高い選択です。"
+    },
+    alternatives: [
+      {
+        id: "quick-train",
+        title: "電車で最短移動",
+        subtitle: "乗換1回で到着",
+        time: "32分",
+        cost: "520円",
+        crowd: "やや混雑",
+        satisfaction: "3.9",
+        roi: 81,
+        tag: "最短",
+        reason: "早い一方で、混雑負担が少しあります。"
+      },
+      {
+        id: "nearby-shop",
+        title: "近場で代替する",
+        subtitle: "徒歩圏で完結",
+        time: "28分",
+        cost: "1,200円",
+        crowd: "低め",
+        satisfaction: "3.8",
+        roi: 78,
+        tag: "近場",
+        reason: "移動は短いですが、選択肢はやや限られます。"
+      }
+    ]
+  },
+  "お得に過ごしたい": {
+    main: {
+      id: "public-free",
+      title: "公共施設と公園を組み合わせる",
+      subtitle: "図書館＋近隣公園",
+      time: "18分",
+      cost: "300円",
+      crowd: "低め",
+      satisfaction: "4.0",
+      roi: 86,
+      tag: "節約",
+      reason: "費用を抑えながら、移動負担と混雑も小さくできます。"
+    },
+    alternatives: [
+      {
+        id: "park",
+        title: "近隣の大型公園",
+        subtitle: "無料中心で楽しむ",
+        time: "18分",
+        cost: "500円",
+        crowd: "普通",
+        satisfaction: "4.0",
+        roi: 82,
+        tag: "無料",
+        reason: "安く楽しめますが、天候の影響を受けます。"
+      },
+      {
+        id: "community-center",
+        title: "地域の公共施設",
+        subtitle: "混雑少なめ",
+        time: "20分",
+        cost: "1,000円",
+        crowd: "空いている",
+        satisfaction: "3.8",
+        roi: 79,
+        tag: "公共",
+        reason: "安定して空いていますが、体験の幅は控えめです。"
+      }
+    ]
+  },
+  "混雑を避けたい": {
+    main: {
+      id: "quiet-public",
+      title: "空いている地域施設へ行く",
+      subtitle: "ピークを避けた近場プラン",
+      time: "20分",
+      cost: "1,000円",
+      crowd: "空いている",
+      satisfaction: "4.1",
+      roi: 89,
+      tag: "混雑回避",
+      reason: "混雑が少なく、家族連れでも疲れにくい候補です。"
+    },
+    alternatives: [
+      {
+        id: "early-museum",
+        title: "早めの時間にミュージアム",
+        subtitle: "午前帯で混雑回避",
+        time: "34分",
+        cost: "2,400円",
+        crowd: "低め",
+        satisfaction: "4.2",
+        roi: 83,
+        tag: "時間ずらし",
+        reason: "混雑は避けやすいですが、移動時間が少し増えます。"
+      },
+      {
+        id: "quiet-cafe",
+        title: "穴場カフェで休む",
+        subtitle: "静かな屋内",
+        time: "22分",
+        cost: "1,800円",
+        crowd: "低め",
+        satisfaction: "4.0",
+        roi: 80,
+        tag: "静か",
+        reason: "ゆっくりできますが、子ども向け要素は少なめです。"
+      }
+    ]
   }
 };
 
