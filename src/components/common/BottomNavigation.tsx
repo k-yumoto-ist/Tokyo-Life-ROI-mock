@@ -1,14 +1,16 @@
 import { BarChart3, Home, Settings } from "lucide-react";
 
+type Tab = "home" | "roi" | "settings";
+
 type Props = {
-  active: "home" | "roi" | "settings";
-  onChange: (tab: "home" | "roi" | "settings") => void;
+  active: Tab;
+  onChange: (tab: Tab) => void;
 };
 
 const items = [
   { id: "home", label: "ホーム", icon: Home },
   { id: "roi", label: "My ROI", icon: BarChart3 },
-  { id: "settings", label: "設定", icon: Settings }
+  { id: "settings", label: "設定", icon: Settings },
 ] as const;
 
 export function BottomNavigation({ active, onChange }: Props) {

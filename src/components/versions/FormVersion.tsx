@@ -1,12 +1,18 @@
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { RecommendationCard } from "../common/RecommendationCard";
-import { formCandidates, personalSummary } from "../../data/mockData";
+import { formCandidates, personalSummary, type RoiCandidate } from "../../data/mockData";
 
 const purposeOptions = ["移動", "子どもと遊ぶ", "買い物", "気分転換"];
 const companionOptions = ["ひとり", "家族", "子どもと", "友人と"];
 const crowdOptions = ["気にしない", "できれば避けたい", "かなり避けたい"];
 
-export function FormVersion() {
+type Props = {
+  onSelect: (candidate: RoiCandidate) => void;
+  onSettings?: () => void;
+};
+
+export function FormVersion({ onSelect }: Props) {
   const [hasDestination, setHasDestination] = useState("目的地あり");
   const [purpose, setPurpose] = useState("移動");
   const [companion, setCompanion] = useState("子どもと");
@@ -17,7 +23,6 @@ export function FormVersion() {
   const [budget, setBudget] = useState("5,000円以内");
   const [returnTime, setReturnTime] = useState("18:00");
   const [searched, setSearched] = useState(false);
-  const [selectedTitle, setSelectedTitle] = useState("");
   const candidates = getSortedCandidates(crowd, budget);
 
   return (
@@ -71,11 +76,10 @@ export function FormVersion() {
       </div>
       {searched && (
         <div className="compact-card-list">
-          <p className="result-summary-line">{origin}から{target}へ。{companion}・{crowd}で比較しました。</p>
+          <p className="result-summary-line">{origin}から{target}へ、{companion}・{crowd}で比較しました。</p>
           {candidates.map((candidate, index) => (
-            <RecommendationCard key={candidate.id} candidate={candidate} featured={index === 0} onSelect={(item) => setSelectedTitle(item.title)} />
+            <RecommendationCard key={candidate.id} candidate={candidate} featured={index === 0} onSelect={onSelect} />
           ))}
-          {selectedTitle && <p className="selection-toast-inline">{selectedTitle}を選びました。</p>}
         </div>
       )}
     </section>
@@ -88,14 +92,14 @@ function getSortedCandidates(crowd: string, budget: string) {
   }
   if (crowd.includes("かなり") || crowd.includes("避けたい")) {
     return [...formCandidates].sort((a, b) => {
-      const rank = { "低め": 0, "普通": 1, "やや混雑": 2 };
+      const rank = { 低め: 0, 普通: 1, やや混雑: 2 };
       return (rank[a.crowd as keyof typeof rank] ?? 9) - (rank[b.crowd as keyof typeof rank] ?? 9);
     });
   }
   return formCandidates;
 }
 
-function Segment({ label, children }: { label: string; children: React.ReactNode }) {
+function Segment({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="prototype-segment">
       <span>{label}</span>

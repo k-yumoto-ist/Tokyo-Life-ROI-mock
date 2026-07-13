@@ -9,7 +9,7 @@ export function VersionSwitcher({ current, onChange }: Props) {
   return (
     <label className="version-switcher">
       <span>試作</span>
-      <select value={current} onChange={(event) => onChange(event.target.value as VersionKey)} aria-label="試作切り替え">
+      <select value={current} onChange={(event) => onChange(event.target.value as VersionKey)} aria-label="試作を切り替える">
         {Object.entries(versions).map(([key, version]) => (
           <option key={key} value={key}>
             {version.label}

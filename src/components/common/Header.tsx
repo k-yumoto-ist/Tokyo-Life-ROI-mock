@@ -5,9 +5,10 @@ import { VersionSwitcher } from "./VersionSwitcher";
 type Props = {
   version: VersionKey;
   onVersionChange: (version: VersionKey) => void;
+  onSettings: () => void;
 };
 
-export function Header({ version, onVersionChange }: Props) {
+export function Header({ version, onVersionChange, onSettings }: Props) {
   return (
     <header className="prototype-header">
       <div>
@@ -16,7 +17,7 @@ export function Header({ version, onVersionChange }: Props) {
       </div>
       <div className="prototype-actions">
         <VersionSwitcher current={version} onChange={onVersionChange} />
-        <button className="icon-shell" aria-label="個人設定">
+        <button className="icon-shell" aria-label="個人設定を開く" onClick={onSettings}>
           <UserRound size={18} />
         </button>
       </div>

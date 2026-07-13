@@ -13,16 +13,10 @@ export type RoiCandidate = {
 
 export const personalSummary = "時間価値 3,200円/h・家族4人・電車中心";
 
-export const simpleGoals = [
-  "ゆっくりしたい",
-  "家族で楽しみたい",
-  "短時間で済ませたい",
-  "お得に過ごしたい",
-  "混雑を避けたい"
-];
+export const simpleGoals = ["ゆっくりしたい", "家族で楽しみたい", "短時間で済ませたい", "お得に過ごしたい", "混雑を避けたい"];
 
 export const simpleRecommendations: Record<string, { main: RoiCandidate; alternatives: RoiCandidate[] }> = {
-  "ゆっくりしたい": {
+  ゆっくりしたい: {
     main: {
       id: "relax-cafe",
       title: "静かなカフェで90分休む",
@@ -33,7 +27,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
       satisfaction: "4.4",
       roi: 88,
       tag: "休息優先",
-      reason: "移動が短く、混雑も少ないため、短時間で気分転換できます。"
+      reason: "移動が短く、混雑も少ないため、短時間で気分転換できます。",
     },
     alternatives: [
       {
@@ -46,7 +40,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "4.2",
         roi: 80,
         tag: "快適",
-        reason: "滞在満足度は高い一方、移動時間が増えます。"
+        reason: "満足度は高い一方、移動時間が少し増えます。",
       },
       {
         id: "library",
@@ -58,11 +52,11 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "3.9",
         roi: 79,
         tag: "無料",
-        reason: "費用は抑えられますが、体験の特別感は控えめです。"
-      }
-    ]
+        reason: "費用は抑えられますが、体験の特別感は控えめです。",
+      },
+    ],
   },
-  "家族で楽しみたい": {
+  家族で楽しみたい: {
     main: {
       id: "science",
       title: "屋内施設で子どもと遊ぶ",
@@ -73,7 +67,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
       satisfaction: "4.6",
       roi: 91,
       tag: "家族向け",
-      reason: "雨や暑さを避けながら、子どもの満足度と移動負担のバランスが高いです。"
+      reason: "雨や暑さを避けながら、子どもの満足度と移動負担のバランスが高いです。",
     },
     alternatives: [
       {
@@ -86,7 +80,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "4.0",
         roi: 82,
         tag: "節約",
-        reason: "安く楽しめますが、天候の影響を受けます。"
+        reason: "安く楽しめますが、天候の影響を受けます。",
       },
       {
         id: "mall",
@@ -98,11 +92,11 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "4.1",
         roi: 76,
         tag: "屋内",
-        reason: "便利ですが、費用と混雑が少し上がります。"
-      }
-    ]
+        reason: "便利ですが、費用と混雑が少し上がります。",
+      },
+    ],
   },
-  "短時間で済ませたい": {
+  短時間で済ませたい: {
     main: {
       id: "quick-errand",
       title: "駅近で用事をまとめて済ませる",
@@ -113,7 +107,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
       satisfaction: "4.2",
       roi: 87,
       tag: "時短",
-      reason: "移動と待ち時間が短く、今日の時間価値では最も効率が高い選択です。"
+      reason: "移動と待ち時間が短く、今日の時間価値では最も効率が高い選択です。",
     },
     alternatives: [
       {
@@ -126,7 +120,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "3.9",
         roi: 81,
         tag: "最短",
-        reason: "早い一方で、混雑負担が少しあります。"
+        reason: "早い一方で、混雑負担が少しあります。",
       },
       {
         id: "nearby-shop",
@@ -138,11 +132,11 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "3.8",
         roi: 78,
         tag: "近場",
-        reason: "移動は短いですが、選択肢はやや限られます。"
-      }
-    ]
+        reason: "移動は短いですが、選択肢はやや限られます。",
+      },
+    ],
   },
-  "お得に過ごしたい": {
+  お得に過ごしたい: {
     main: {
       id: "public-free",
       title: "公共施設と公園を組み合わせる",
@@ -153,11 +147,11 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
       satisfaction: "4.0",
       roi: 86,
       tag: "節約",
-      reason: "費用を抑えながら、移動負担と混雑も小さくできます。"
+      reason: "費用を抑えながら、移動負担と混雑も少なくできます。",
     },
     alternatives: [
       {
-        id: "park",
+        id: "park-free",
         title: "近隣の大型公園",
         subtitle: "無料中心で楽しむ",
         time: "18分",
@@ -166,7 +160,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "4.0",
         roi: 82,
         tag: "無料",
-        reason: "安く楽しめますが、天候の影響を受けます。"
+        reason: "安く楽しめますが、天候の影響を受けます。",
       },
       {
         id: "community-center",
@@ -178,11 +172,11 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "3.8",
         roi: 79,
         tag: "公共",
-        reason: "安定して空いていますが、体験の幅は控えめです。"
-      }
-    ]
+        reason: "安定して空いていますが、体験の幅は控えめです。",
+      },
+    ],
   },
-  "混雑を避けたい": {
+  混雑を避けたい: {
     main: {
       id: "quiet-public",
       title: "空いている地域施設へ行く",
@@ -193,7 +187,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
       satisfaction: "4.1",
       roi: 89,
       tag: "混雑回避",
-      reason: "混雑が少なく、家族連れでも疲れにくい候補です。"
+      reason: "混雑が少なく、家族連れでも疲れにくい候補です。",
     },
     alternatives: [
       {
@@ -206,7 +200,7 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "4.2",
         roi: 83,
         tag: "時間ずらし",
-        reason: "混雑は避けやすいですが、移動時間が少し増えます。"
+        reason: "混雑は避けやすいですが、移動時間が少し増えます。",
       },
       {
         id: "quiet-cafe",
@@ -218,10 +212,10 @@ export const simpleRecommendations: Record<string, { main: RoiCandidate; alterna
         satisfaction: "4.0",
         roi: 80,
         tag: "静か",
-        reason: "ゆっくりできますが、子ども向け要素は少なめです。"
-      }
-    ]
-  }
+        reason: "ゆっくりできますが、子ども向け要素は少なめです。",
+      },
+    ],
+  },
 };
 
 export const fallbackSimpleKey = "家族で楽しみたい";
@@ -237,7 +231,7 @@ export const formCandidates: RoiCandidate[] = [
     satisfaction: "4.3",
     roi: 86,
     tag: "おすすめ",
-    reason: "時間価値、交通費、混雑傾向のバランスが最も高い候補です。"
+    reason: "時間価値、交通費、混雑傾向のバランスが最も高い候補です。",
   },
   {
     id: "taxi",
@@ -249,7 +243,7 @@ export const formCandidates: RoiCandidate[] = [
     satisfaction: "4.0",
     roi: 72,
     tag: "快適",
-    reason: "徒歩負担は小さいですが、費用が大きく上がります。"
+    reason: "徒歩負担は少ないですが、費用が大きく上がります。",
   },
   {
     id: "bus-walk",
@@ -261,20 +255,18 @@ export const formCandidates: RoiCandidate[] = [
     satisfaction: "3.8",
     roi: 64,
     tag: "節約",
-    reason: "費用は低い一方、徒歩と所要時間が増えます。"
-  }
+    reason: "費用は低い一方、徒歩と所要時間が増えます。",
+  },
 ];
 
 export const chatExamples = [
   "今日は子どもと外出したい。夕方までには帰りたい。なるべく混んでいない場所がいい",
   "仕事帰りに短時間で気分転換したい。高すぎる場所は避けたい",
-  "雨でも行けて、家族で楽しめる場所を探したい"
+  "雨でも行けて、家族で楽しめる場所を探したい",
 ];
-
-export const chatConditionChips = ["家族", "子ども連れ", "夕方まで", "混雑回避", "外出"];
 
 export const chatCandidates: RoiCandidate[] = [
   simpleRecommendations["家族で楽しみたい"].main,
   formCandidates[0],
-  simpleRecommendations["家族で楽しみたい"].alternatives[0]
+  simpleRecommendations["家族で楽しみたい"].alternatives[0],
 ];

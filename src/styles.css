@@ -1885,6 +1885,23 @@ button:disabled {
   font-weight: 850;
 }
 
+.profile-line-button {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #d9e8f5;
+  text-align: left;
+}
+
+.profile-line-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .version-title {
   margin: 0;
   color: #10234d;
@@ -2189,4 +2206,47 @@ button:disabled {
   border: 2px solid #0b7cff;
   background: #edf6ff;
   color: #075fbd;
+}
+
+.flow-back {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 4px;
+}
+
+.choice-flow-panel .choice-card {
+  text-align: left;
+}
+
+.choice-flow-panel .choice-card > svg {
+  display: block;
+  margin: 0 auto 4px;
+  color: #0b73d9;
+}
+
+.flow-reflect-card {
+  grid-template-columns: 1fr auto;
+}
+
+.compact-satisfaction {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.face-mark {
+  display: block;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.profile-screen-lite {
+  padding-bottom: calc(36px + env(safe-area-inset-bottom));
+}
+
+.time-value-actions .text-action-button,
+.time-editor-panel .text-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }

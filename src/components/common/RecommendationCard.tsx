@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CheckCircle2, Clock3, Coins, Users } from "lucide-react";
 import type { RoiCandidate } from "../../data/mockData";
 
@@ -17,7 +18,7 @@ export function RecommendationCard({ candidate, featured = false, actionLabel = 
           <h2>{candidate.title}</h2>
           <p>{candidate.subtitle}</p>
         </div>
-        <div className="prototype-roi">
+        <div className="prototype-roi" aria-label={`個人ROI ${candidate.roi}点`}>
           <strong>{candidate.roi}</strong>
           <span>ROI</span>
         </div>
@@ -40,7 +41,7 @@ export function RecommendationCard({ candidate, featured = false, actionLabel = 
   );
 }
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div>
       <span>{icon}{label}</span>
