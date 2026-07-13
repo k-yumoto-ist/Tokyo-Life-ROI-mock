@@ -15,6 +15,10 @@ export const versions = {
     label: "AIバトル型",
     description: "3つの行動案を比較して、最適案を決める",
   },
+  "city-contribution": {
+    label: "都市貢献",
+    description: "あなたに良い選択を、東京の快適さにもつなげる",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -22,7 +26,7 @@ export type VersionKey = keyof typeof versions;
 export const defaultVersion: VersionKey = "simple";
 
 export function normalizeVersion(value: string | null): VersionKey {
-  if (value === "form" || value === "chat" || value === "battle" || value === "simple") {
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "simple") {
     return value;
   }
   return defaultVersion;

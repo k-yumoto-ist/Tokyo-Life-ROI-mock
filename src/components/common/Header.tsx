@@ -14,6 +14,7 @@ export function Header({ version, onVersionChange, onSettings }: Props) {
       <div>
         <h1>Tokyo Life ROI</h1>
         <p>試作：{versions[version].label}</p>
+        {version === "city-contribution" && <small className="header-city-subcopy">あなたの選択で、東京をもっと快適に</small>}
       </div>
       <div className="prototype-actions">
         <VersionSwitcher current={version} onChange={onVersionChange} />

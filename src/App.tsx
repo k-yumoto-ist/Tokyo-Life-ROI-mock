@@ -20,6 +20,7 @@ import { SimpleVersion } from "./components/versions/SimpleVersion";
 import { FormVersion } from "./components/versions/FormVersion";
 import { ChatVersion } from "./components/versions/ChatVersion";
 import { BattleVersion } from "./components/versions/BattleVersion";
+import { CityContributionVersion } from "./components/versions/CityContributionVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
@@ -66,7 +67,8 @@ const defaultProfile: ProfileState = {
 };
 
 function readVersionFromUrl() {
-  const versionFromUrl = new URLSearchParams(window.location.search).get("version");
+  const searchParams = new URLSearchParams(window.location.search);
+  const versionFromUrl = searchParams.get("version") ?? searchParams.get("pattern");
   if (versionFromUrl) return normalizeVersion(versionFromUrl);
   try {
     return normalizeVersion(window.localStorage.getItem(versionStorageKey));
@@ -131,6 +133,7 @@ export default function App() {
   function changeVersion(nextVersion: VersionKey) {
     const url = new URL(window.location.href);
     url.searchParams.set("version", nextVersion);
+    url.searchParams.delete("pattern");
     window.history.pushState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
     window.localStorage.setItem(versionStorageKey, nextVersion);
     setVersion(nextVersion);
@@ -164,6 +167,7 @@ export default function App() {
             {view === "home" && version === "form" && <FormVersion onSelect={handleSelect} />}
             {view === "home" && version === "chat" && <ChatVersion onSelect={handleSelect} />}
             {view === "home" && version === "battle" && <BattleVersion onComplete={handleBattleComplete} onMyRoi={() => setView("roi")} />}
+            {view === "home" && version === "city-contribution" && <CityContributionVersion />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}

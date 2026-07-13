@@ -1833,6 +1833,14 @@ button:disabled {
   font-weight: 850;
 }
 
+.header-city-subcopy {
+  display: block;
+  margin-top: 3px;
+  color: #19836b;
+  font-size: 10px;
+  font-weight: 850;
+}
+
 .prototype-actions {
   display: flex;
   align-items: center;
@@ -2781,3 +2789,354 @@ button:disabled {
 
 @keyframes battle-pulse { from { transform: scale(0.92); opacity: 0.65; } to { transform: scale(1.05); opacity: 1; } }
 @keyframes battle-dot { to { transform: translateY(-5px); opacity: 0.35; } }
+
+.city-contribution-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.city-status-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  border: 1px solid #d7e8f5;
+  border-radius: 18px;
+  background: linear-gradient(130deg, #f5fbff, #f5fcf8);
+  box-shadow: 0 9px 22px rgba(29, 73, 120, 0.06);
+  padding: 10px;
+}
+
+.city-status-card > div:not(.city-level-progress) {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-height: 44px;
+  text-align: center;
+}
+
+.city-status-card span {
+  color: #64798f;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.city-status-card strong {
+  color: #18365d;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.city-level-progress {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #dcebf5;
+  padding: 8px 2px 0;
+}
+
+.city-level-progress i {
+  overflow: hidden;
+  height: 7px;
+  border-radius: 999px;
+  background: #dbeaf1;
+}
+
+.city-level-progress b {
+  display: block;
+  width: 80%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1d95ef, #57be91);
+}
+
+.city-hero-copy {
+  padding: 1px 2px 0;
+}
+
+.city-hero-copy > span,
+.city-result-card > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: #eaf7f1;
+  color: #21805e;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+}
+
+.city-hero-copy h2 {
+  margin: 7px 0 0;
+  color: #10234d;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1.32;
+}
+
+.city-quest-card,
+.city-candidate-card,
+.city-result-card,
+.city-result-explain,
+.city-badge-earned {
+  border: 1px solid #ddeaf4;
+  border-radius: 19px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 10px 26px rgba(29, 73, 120, 0.07);
+  padding: 13px;
+}
+
+.city-quest-card h3,
+.city-choices-head h2,
+.city-result-explain h3 {
+  margin: 0;
+  color: #10234d;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.city-goal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.city-goal-grid button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid #d5e4ef;
+  border-radius: 13px;
+  background: white;
+  color: #36546e;
+  padding: 7px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.city-goal-grid button.is-active {
+  border: 2px solid #159877;
+  background: #edf9f3;
+  color: #197f60;
+}
+
+.city-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.city-context span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  background: #f4f8fb;
+  color: #536f88;
+  padding: 6px 7px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.city-quest-button {
+  margin-top: 12px;
+  background: linear-gradient(135deg, #0c81ee, #198dca);
+}
+
+.city-badge-link {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 40px;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: #2b7d66;
+  padding: 4px 2px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.city-choices {
+  display: grid;
+  gap: 10px;
+}
+
+.city-choices-head p {
+  margin: 4px 0 0;
+  color: #62788e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.city-candidate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.city-candidate-card {
+  display: grid;
+  grid-template-columns: 43px 1fr;
+  gap: 7px 10px;
+}
+
+.city-place-icon {
+  display: grid;
+  width: 43px;
+  height: 43px;
+  place-items: center;
+  border-radius: 14px;
+  background: #eaf5ff;
+  color: #1281e7;
+}
+
+.city-place-icon.park { background: #ebf8ef; color: #309565; }
+.city-place-icon.community { background: #f3efff; color: #7762cf; }
+
+.city-candidate-heading h3 {
+  margin: 1px 0 0;
+  color: #10234d;
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.35;
+}
+
+.city-candidate-heading p,
+.city-result-card p,
+.city-result-explain p,
+.city-badge-earned p {
+  margin: 3px 0 0;
+  color: #63778d;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.city-hints {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.city-hints span {
+  border-radius: 999px;
+  background: #f4f8fb;
+  color: #43627c;
+  padding: 5px 7px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.city-travel {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: -1px 0 0;
+  color: #506d86;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.city-candidate-card > button {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  border-color: #cde0ee;
+  color: #176db5;
+}
+
+.city-result {
+  display: grid;
+  gap: 11px;
+}
+
+.city-result-card {
+  border: 2px solid #48aa86;
+  background: linear-gradient(145deg, #f0fbf5, #ffffff 72%);
+}
+
+.city-result-card h2 {
+  margin: 8px 0 0;
+  color: #10234d;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1.3;
+}
+
+.city-result-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.city-result-metrics strong {
+  display: grid;
+  min-height: 56px;
+  place-items: center;
+  border-radius: 12px;
+  background: white;
+  color: #176e98;
+  padding: 6px 3px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.city-result-metrics small {
+  color: #668198;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.city-impact-list {
+  display: grid;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.city-impact-list span {
+  display: flex;
+  justify-content: space-between;
+  color: #43627c;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.city-impact-list b { color: #21805e; }
+
+.city-result-explain p { margin-top: 7px; font-size: 12px; line-height: 1.55; }
+
+.city-badge-earned {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 10px;
+  border-color: #f0d798;
+  background: #fffdf4;
+}
+
+.city-badge-earned > svg { color: #d69d24; }
+.city-badge-earned span { color: #b0780a; font-size: 11px; font-weight: 950; }
+.city-badge-earned h3 { margin: 3px 0 0; color: #4e3c14; font-size: 17px; }
+
+.city-result-actions { display: grid; gap: 8px; }
+.city-point-note { margin: 0; color: #718196; font-size: 10px; font-weight: 800; line-height: 1.5; text-align: center; }
+
+.city-badges-sheet > h2 { margin: 0; color: #10234d; font-size: 23px; }
+.city-badges-sheet > p { margin-top: 5px; }
+.city-badge-list { display: grid; gap: 8px; margin-top: 16px; }
+.city-badge-list article { display: grid; grid-template-columns: 29px 1fr auto; align-items: center; gap: 8px; border-radius: 13px; background: #f4f7fa; color: #97a5b3; padding: 9px; }
+.city-badge-list article.is-achieved { background: #fffaf0; color: #c68c1d; }
+.city-badge-list strong { display: block; color: #5d6a78; font-size: 13px; }
+.city-badge-list article.is-achieved strong { color: #5e481a; }
+.city-badge-list span { display: block; margin-top: 2px; color: #8090a0; font-size: 10px; font-weight: 800; }
+.city-badges-sheet > small { display: block; margin-top: 15px; color: #718196; font-size: 10px; font-weight: 800; line-height: 1.5; }
