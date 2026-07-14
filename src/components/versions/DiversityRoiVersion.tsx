@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -27,12 +27,14 @@ import {
   diversityMoodPresets,
   diversityPlans,
   diversityValueLabels,
-  neutralDiversityWeights,
+  findDiversityPlan,
+  getDiversityScenario,
   qolScore,
   readDiversitySession,
   saveDiversitySession,
   scoreDiversityPlan,
   type DiversityPlan,
+  type DiversityMoodId,
   type DiversitySession,
   type DiversityValueKey,
   type DiversityWeights,
@@ -42,7 +44,7 @@ type DiversityPhase = "home" | "plans" | "selected" | "feedback";
 type EntryMode = "destination" | "explore";
 type Accent = DiversityPlan["accent"];
 
-const moodOptions = [
+const moodOptions: { id: DiversityMoodId; label: string; Icon: LucideIcon; tone: string }[] = [
   { id: "efficient", label: "効率よく動きたい", Icon: Clock3, tone: "blue" },
   { id: "slow", label: "ゆっくり過ごしたい", Icon: Leaf, tone: "green" },
   { id: "family", label: "家族時間を大切に", Icon: UsersRound, tone: "orange" },
@@ -116,15 +118,17 @@ function PlanCard({
   );
 }
 
-function ValueBalance({ weights, onChange }: { weights: DiversityWeights; onChange: (key: DiversityValueKey, value: number) => void }) {
+function ValueBalance({ weights, expanded, onChange, onToggle }: { weights: DiversityWeights; expanded: boolean; onChange: (key: DiversityValueKey, value: number) => void; onToggle: () => void }) {
+  const visibleKeys = expanded ? valueKeys : (["time", "satisfaction", "family"] as DiversityValueKey[]);
   return (
     <section className="diversity-balance-card">
       <div className="diversity-section-heading">
         <div><span className="eyebrow-label">VALUE BALANCE</span><h2>今日、大切にしたいこと</h2></div>
-        <Sparkles size={20} className="accent-sparkle" />
+        <button className="diversity-balance-toggle" onClick={onToggle} aria-expanded={expanded}>{expanded ? "閉じる" : "調整"}</button>
       </div>
+      <p className="diversity-balance-summary">時間・満足・家族時間を中心に提案します</p>
       <div className="diversity-value-list">
-        {valueKeys.map((key) => {
+        {visibleKeys.map((key) => {
           const Icon = valueIcons[key];
           return (
             <div className="diversity-value-row" key={key}>
@@ -136,11 +140,12 @@ function ValueBalance({ weights, onChange }: { weights: DiversityWeights; onChan
           );
         })}
       </div>
+      {!expanded && <button className="diversity-expand-link" onClick={onToggle}>快適さ・発見・お金も調整する <ChevronRight size={14} /></button>}
     </section>
   );
 }
 
-function Sheet({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
+function Sheet({ children, onClose, title }: { children: ReactNode; onClose: () => void; title: string }) {
   return (
     <div className="diversity-sheet-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="diversity-sheet" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}>
@@ -191,12 +196,13 @@ function ComparisonSheet({ plans, weights, onChoose }: { plans: DiversityPlan[];
 
 export function DiversityRoiVersion({ onMyRoi }: { onMyRoi: () => void }) {
   const [phase, setPhase] = useState<DiversityPhase>("home");
-  const [mood, setMood] = useState("family");
+  const [mood, setMood] = useState<DiversityMoodId>("family");
   const [entryMode, setEntryMode] = useState<EntryMode>("explore");
-  const [weights, setWeights] = useState<DiversityWeights>(neutralDiversityWeights);
-  const [selectedPlanId, setSelectedPlanId] = useState<DiversityPlan["id"] | null>(null);
-  const [detailPlanId, setDetailPlanId] = useState<DiversityPlan["id"] | null>(null);
+  const [weights, setWeights] = useState<DiversityWeights>(diversityMoodPresets.family);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [detailPlanId, setDetailPlanId] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [balanceExpanded, setBalanceExpanded] = useState(false);
   const [started, setStarted] = useState(false);
   const [feedbackSaved, setFeedbackSaved] = useState(false);
   const [satisfaction, setSatisfaction] = useState(4);
@@ -204,13 +210,14 @@ export function DiversityRoiVersion({ onMyRoi }: { onMyRoi: () => void }) {
   const [revisit, setRevisit] = useState(true);
   const [discovery, setDiscovery] = useState(true);
 
-  const selectedPlan = diversityPlans.find((plan) => plan.id === selectedPlanId) ?? diversityPlans[0];
-  const detailPlan = diversityPlans.find((plan) => plan.id === detailPlanId);
-  const scoredPlans = useMemo(() => diversityPlans.map((plan) => ({ plan, score: scoreDiversityPlan(plan, weights) })), [weights]);
+  const scenario = getDiversityScenario(mood);
+  const selectedPlan = findDiversityPlan(selectedPlanId ?? "") ?? scenario.plans[0];
+  const detailPlan = findDiversityPlan(detailPlanId ?? "");
 
-  function chooseMood(nextMood: string) {
+  function chooseMood(nextMood: DiversityMoodId) {
     setMood(nextMood);
-    setWeights(diversityMoodPresets[nextMood] ?? neutralDiversityWeights);
+    setWeights(diversityMoodPresets[nextMood]);
+    setBalanceExpanded(false);
   }
 
   function choosePlan(plan: DiversityPlan) {
@@ -239,24 +246,24 @@ export function DiversityRoiVersion({ onMyRoi }: { onMyRoi: () => void }) {
     <section className="version-panel diversity-version-panel">
       {phase === "home" ? (
         <>
-          <div className="diversity-hero-copy"><span className="diversity-orbit-icon"><Sparkles size={19} /></span><h2>あなたの価値観で、東京を選ぶ。</h2><p>効率だけが、豊かさではない。</p></div>
-          <div className="diversity-profile-strip"><UsersRound size={15} /><span>家族4人・時間価値 3,200円/h</span><ArrowRight size={14} /></div>
+          <div className="diversity-hero-copy"><span className="diversity-orbit-icon"><Sparkles size={19} /></span><h2>あなたの価値観で、東京を選ぶ。</h2><p>効率だけが、豊かさではない。</p><span className="diversity-hero-context">{scenario.title}</span></div>
+          <div className="diversity-profile-strip"><UsersRound size={15} /><span>家族4人・時間価値 3,200円/h</span><span className="diversity-profile-separator" /><span>{scenario.condition}</span><ArrowRight size={14} /></div>
           <h2 className="diversity-question">今日はどう過ごしたい？</h2>
           <div className="diversity-mood-grid">{moodOptions.map(({ id, label, Icon, tone }) => <button key={id} className={`diversity-mood-button tone-${tone} ${mood === id ? "is-active" : ""}`} onClick={() => chooseMood(id)}><Icon size={25} /><span>{label}</span>{mood === id && <Check size={15} className="diversity-selected-check" />}</button>)}</div>
           <div className="diversity-entry-tabs" role="tablist" aria-label="探し方"><button className={entryMode === "destination" ? "is-active" : ""} onClick={() => setEntryMode("destination")}><MapPin size={17} />行きたい場所</button><button className={entryMode === "explore" ? "is-active" : ""} onClick={() => setEntryMode("explore")}><Compass size={17} />やりたいことから探す</button></div>
-          <div className="diversity-compact-condition"><MapPin size={15} /><span>{entryMode === "destination" ? "東京駅周辺" : "家族で2〜3時間・予算5,000円以内"}</span><ChevronRight size={15} /></div>
+          <div className="diversity-compact-condition"><MapPin size={15} /><span>{entryMode === "destination" ? scenario.destinationLabel : scenario.condition}</span><ChevronRight size={15} /></div>
         </>
       ) : (
-        <div className="diversity-results-top"><button className="mini-link-button" onClick={() => setPhase("home")}><ArrowLeft size={16} />条件を変える</button><div className="diversity-results-heading"><div><span className="eyebrow-label">VALUE OPTIONS</span><h2>それぞれの良さを比べる</h2><p>効率・満足・発見。今日はどれを選ぶ？</p></div><div className="diversity-plan-count">{scoredPlans.length}<small>案</small></div></div></div>
+          <div className="diversity-results-top"><button className="mini-link-button" onClick={() => setPhase("home")}><ArrowLeft size={16} />条件を変える</button><div className="diversity-results-heading"><div><span className="eyebrow-label">VALUE OPTIONS</span><h2>{scenario.title}</h2><p>{scenario.condition}・{entryMode === "destination" ? scenario.destinationLabel : "過ごし方から探す"}</p></div><div className="diversity-plan-count">{scenario.plans.length}<small>案</small></div></div></div>
       )}
 
-      {phase === "home" ? <ValueBalance weights={weights} onChange={(key, value) => setWeights((current) => ({ ...current, [key]: value }))} /> : <div className="diversity-plan-list">{diversityPlans.map((plan) => <PlanCard key={plan.id} plan={plan} onDetails={() => setDetailPlanId(plan.id)} onChoose={() => choosePlan(plan)} />)}</div>}
+      {phase === "home" ? <ValueBalance weights={weights} expanded={balanceExpanded} onToggle={() => setBalanceExpanded((current) => !current)} onChange={(key, value) => setWeights((current) => ({ ...current, [key]: value }))} /> : <div className="diversity-plan-list">{scenario.plans.map((plan) => <PlanCard key={plan.id} plan={plan} onDetails={() => setDetailPlanId(plan.id)} onChoose={() => choosePlan(plan)} />)}</div>}
       {phase === "home" && <button className="primary-button diversity-main-cta" onClick={() => setPhase("plans")}><Sparkles size={18} />3つの過ごし方を見る <ChevronRight size={18} /></button>}
       {phase === "plans" && <button className="secondary-button action-wide diversity-compare-button" onClick={() => setCompareOpen(true)}><Route size={17} />それぞれの価値を比較する</button>}
-      {phase === "home" && <p className="diversity-data-note"><CircleHelp size={14} />時間・費用・混雑・家族構成を組み合わせたデモ提案</p>}
+      {phase === "home" && <p className="diversity-data-note"><CircleHelp size={14} />気分と価値バランスで、提案する場所・費用・混雑が切り替わります</p>}
 
       {detailPlan && <Sheet title="この選択で得られるもの" onClose={() => setDetailPlanId(null)}><PlanDetails plan={detailPlan} weights={weights} onChoose={() => choosePlan(detailPlan)} /></Sheet>}
-      {compareOpen && <Sheet title="それぞれの良さを比べる" onClose={() => setCompareOpen(false)}><ComparisonSheet plans={diversityPlans} weights={weights} onChoose={choosePlan} /></Sheet>}
+      {compareOpen && <Sheet title="それぞれの良さを比べる" onClose={() => setCompareOpen(false)}><ComparisonSheet plans={scenario.plans} weights={weights} onChoose={choosePlan} /></Sheet>}
     </section>
   );
 }
@@ -282,6 +289,6 @@ function DiversityFeedback({ plan, saved, satisfaction, crowd, revisit, discover
 
 export function DiversityRoiMyPage() {
   const [session] = useState(() => readDiversitySession());
-  const plan = diversityPlans.find((item) => item.id === session?.planId) ?? diversityPlans[1];
+  const plan = findDiversityPlan(session?.planId ?? "") ?? diversityPlans[1];
   return <section className="version-panel diversity-my-page"><div className="diversity-my-hero"><span className="diversity-orbit-icon"><Heart size={21} /></span><span className="eyebrow-label">MY TOKYO</span><h2>あなたが選んだ東京</h2><p>効率だけではない、今月のリターン</p></div><div className="diversity-month-card"><span className="section-label">今月の成果</span><div className="diversity-my-metrics"><strong>4時間20分<small>生み出した時間</small></strong><strong>8,400円<small>節約した金額</small></strong><strong>4.2<small>平均満足度</small></strong><strong>6回<small>混雑を避けた</small></strong></div></div><div className="diversity-insight-card"><Sparkles size={20} /><div><strong>あなたの選択傾向</strong><p>効率だけでなく、家族時間と快適さを大切にする選択が増えています。</p></div></div><div className="diversity-profile-values"><div className="diversity-section-heading"><div><span className="eyebrow-label">YOUR VALUES</span><h2>よく大切にしている価値</h2></div><Compass size={19} /></div>{(["time", "satisfaction", "family", "comfort", "discovery"] as DiversityValueKey[]).map((key, index) => { const Icon = valueIcons[key]; return <MetricMeter key={key} label={diversityValueLabels[key]} value={[4, 4, 5, 4, 3][index]} Icon={Icon} accent={index === 4 ? "purple" : "green"} />; })}</div><div className="diversity-last-choice"><div><span className="eyebrow-label">LAST CHOICE</span><h3>{plan.name}</h3><p>{plan.destination}・満足度 4.0</p></div><Trophy size={25} /></div><div className="diversity-city-card"><Building2 size={19} /><div><strong>あなたの選択が、東京を少し変える</strong><p>人流の分散・地域施設の利用・未訪問エリアの発見</p></div></div></section>;
 }
