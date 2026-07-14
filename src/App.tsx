@@ -22,6 +22,7 @@ import { ChatVersion } from "./components/versions/ChatVersion";
 import { BattleVersion } from "./components/versions/BattleVersion";
 import { CityContributionVersion } from "./components/versions/CityContributionVersion";
 import { VisualHistory, VisualVersion } from "./components/versions/VisualVersion";
+import { TrophyCollection, TrophyVersion } from "./components/versions/TrophyVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
@@ -69,7 +70,7 @@ const defaultProfile: ProfileState = {
 
 function readVersionFromUrl() {
   const searchParams = new URLSearchParams(window.location.search);
-  const versionFromUrl = searchParams.get("version") ?? searchParams.get("pattern");
+  const versionFromUrl = searchParams.get("version") ?? searchParams.get("pattern") ?? searchParams.get("mode");
   if (versionFromUrl) return normalizeVersion(versionFromUrl);
   try {
     return normalizeVersion(window.localStorage.getItem(versionStorageKey));
@@ -135,6 +136,7 @@ export default function App() {
     const url = new URL(window.location.href);
     url.searchParams.set("version", nextVersion);
     url.searchParams.delete("pattern");
+    url.searchParams.delete("mode");
     window.history.pushState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
     window.localStorage.setItem(versionStorageKey, nextVersion);
     setVersion(nextVersion);
@@ -170,6 +172,7 @@ export default function App() {
             {view === "home" && version === "battle" && <BattleVersion onComplete={handleBattleComplete} onMyRoi={() => setView("roi")} />}
             {view === "home" && version === "city-contribution" && <CityContributionVersion />}
             {view === "home" && version === "visual" && <VisualVersion />}
+            {view === "home" && version === "trophy" && <TrophyVersion onCollection={() => setView("roi")} />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}
@@ -181,7 +184,8 @@ export default function App() {
               />
             )}
             {view === "roi" && version === "visual" && <VisualHistory />}
-            {view === "roi" && version !== "visual" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
+            {view === "roi" && version === "trophy" && <TrophyCollection />}
+            {view === "roi" && version !== "visual" && version !== "trophy" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
             {view === "reflect" && (
               <ReflectPanel
                 candidate={selectedCandidate}

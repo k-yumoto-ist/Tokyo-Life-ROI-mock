@@ -23,6 +23,10 @@ export const versions = {
     label: "アイコン中心",
     description: "アイコンと数値で、今の選択を比べる",
   },
+  trophy: {
+    label: "トロフィー",
+    description: "東京での選択を、実績として集める",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -30,7 +34,8 @@ export type VersionKey = keyof typeof versions;
 export const defaultVersion: VersionKey = "simple";
 
 export function normalizeVersion(value: string | null): VersionKey {
-  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "simple") {
+  if (value === "7") return "trophy";
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "simple") {
     return value;
   }
   return defaultVersion;
