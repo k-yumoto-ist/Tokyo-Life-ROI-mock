@@ -3621,6 +3621,68 @@ button:disabled {
 .diversity-results-heading p { max-width: 280px; line-height: 1.45; }
 .diversity-results-top { padding-bottom: 2px; border-bottom: 1px solid #e5eef3; }
 
+/* Keep the reflection flow aligned to the page edge, not the visual center. */
+.diversity-feedback-panel {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  justify-items: stretch;
+}
+
+.diversity-feedback-panel > .mini-link-button {
+  justify-self: start;
+}
+
+.diversity-feedback-heading {
+  display: flex;
+  align-items: center;
+  justify-items: initial;
+  gap: 11px;
+  padding: 4px 2px 6px;
+  text-align: left;
+}
+
+.diversity-feedback-heading .diversity-orbit-icon {
+  flex: 0 0 auto;
+}
+
+.diversity-feedback-heading-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.diversity-feedback-heading-copy h2 {
+  margin: 0;
+}
+
+.diversity-feedback-heading-copy p {
+  margin: 0;
+}
+
+.diversity-feedback-form {
+  display: grid;
+  width: 100%;
+  gap: 16px;
+  border: 1px solid #dce9f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 9px 25px rgba(30, 83, 120, .05);
+  padding: 14px;
+}
+
+.diversity-feedback-form .diversity-feedback-block {
+  width: 100%;
+}
+
+.diversity-choice-row.is-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.diversity-choice-row.is-three button {
+  min-height: 50px;
+  padding: 6px 3px;
+}
+
 @media (max-width: 380px) {
   .diversity-hero-copy { padding-right: 14px; }
   .diversity-hero-copy h2 { font-size: 20px; }
