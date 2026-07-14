@@ -23,6 +23,7 @@ import { BattleVersion } from "./components/versions/BattleVersion";
 import { CityContributionVersion } from "./components/versions/CityContributionVersion";
 import { VisualHistory, VisualVersion } from "./components/versions/VisualVersion";
 import { TrophyCollection, TrophyVersion } from "./components/versions/TrophyVersion";
+import { DiversityRoiMyPage, DiversityRoiVersion } from "./components/versions/DiversityRoiVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
@@ -173,6 +174,7 @@ export default function App() {
             {view === "home" && version === "city-contribution" && <CityContributionVersion />}
             {view === "home" && version === "visual" && <VisualVersion />}
             {view === "home" && version === "trophy" && <TrophyVersion onCollection={() => setView("roi")} />}
+            {view === "home" && version === "diversity-roi" && <DiversityRoiVersion onMyRoi={() => setView("roi")} />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}
@@ -185,7 +187,8 @@ export default function App() {
             )}
             {view === "roi" && version === "visual" && <VisualHistory />}
             {view === "roi" && version === "trophy" && <TrophyCollection />}
-            {view === "roi" && version !== "visual" && version !== "trophy" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
+            {view === "roi" && version === "diversity-roi" && <DiversityRoiMyPage />}
+            {view === "roi" && version !== "visual" && version !== "trophy" && version !== "diversity-roi" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
             {view === "reflect" && (
               <ReflectPanel
                 candidate={selectedCandidate}

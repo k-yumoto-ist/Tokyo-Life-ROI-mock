@@ -27,6 +27,10 @@ export const versions = {
     label: "トロフィー",
     description: "東京での選択を、実績として集める",
   },
+  "diversity-roi": {
+    label: "8. 多様性ROI版",
+    description: "効率・満足・発見など、多様な価値から自分らしい選択をする統合最終候補",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -35,7 +39,8 @@ export const defaultVersion: VersionKey = "simple";
 
 export function normalizeVersion(value: string | null): VersionKey {
   if (value === "7") return "trophy";
-  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "simple") {
+  if (value === "8") return "diversity-roi";
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple") {
     return value;
   }
   return defaultVersion;
