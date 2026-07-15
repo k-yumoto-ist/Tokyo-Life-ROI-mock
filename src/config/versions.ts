@@ -1,30 +1,30 @@
 export const versions = {
   simple: {
-    label: "シンプル提案型",
+    label: "1. シンプル提案型",
     description: "直感的に選んで、最適案をすぐ見る",
   },
   form: {
-    label: "条件入力型",
+    label: "2. 条件入力型",
     description: "条件を指定して、複数候補を比較する",
   },
   chat: {
-    label: "AI相談型",
+    label: "3. AI相談型",
     description: "自然文から条件を整理して提案する",
   },
   battle: {
-    label: "AIバトル型",
+    label: "4. AIバトル型",
     description: "3つの行動案を比較して、最適案を決める",
   },
   "city-contribution": {
-    label: "都市貢献",
+    label: "5. 都市貢献",
     description: "あなたに良い選択を、東京の快適さにもつなげる",
   },
   visual: {
-    label: "アイコン中心",
+    label: "6. アイコン中心",
     description: "アイコンと数値で、今の選択を比べる",
   },
   trophy: {
-    label: "トロフィー",
+    label: "7. トロフィー",
     description: "東京での選択を、実績として集める",
   },
   "diversity-roi": {
