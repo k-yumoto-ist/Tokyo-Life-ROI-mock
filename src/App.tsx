@@ -24,6 +24,7 @@ import { CityContributionVersion } from "./components/versions/CityContributionV
 import { VisualHistory, VisualVersion } from "./components/versions/VisualVersion";
 import { TrophyCollection, TrophyVersion } from "./components/versions/TrophyVersion";
 import { DiversityRoiMyPage, DiversityRoiVersion } from "./components/versions/DiversityRoiVersion";
+import { SimpleExperienceMyRoi, SimpleExperienceVersion } from "./components/versions/SimpleExperienceVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
@@ -175,6 +176,7 @@ export default function App() {
             {view === "home" && version === "visual" && <VisualVersion />}
             {view === "home" && version === "trophy" && <TrophyVersion onCollection={() => setView("roi")} />}
             {view === "home" && version === "diversity-roi" && <DiversityRoiVersion onMyRoi={() => setView("roi")} />}
+            {view === "home" && version === "simple-experience" && <SimpleExperienceVersion onMyRoi={() => setView("roi")} />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}
@@ -188,7 +190,8 @@ export default function App() {
             {view === "roi" && version === "visual" && <VisualHistory />}
             {view === "roi" && version === "trophy" && <TrophyCollection />}
             {view === "roi" && version === "diversity-roi" && <DiversityRoiMyPage />}
-            {view === "roi" && version !== "visual" && version !== "trophy" && version !== "diversity-roi" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
+            {view === "roi" && version === "simple-experience" && <SimpleExperienceMyRoi />}
+            {view === "roi" && version !== "visual" && version !== "trophy" && version !== "diversity-roi" && version !== "simple-experience" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
             {view === "reflect" && (
               <ReflectPanel
                 candidate={selectedCandidate}

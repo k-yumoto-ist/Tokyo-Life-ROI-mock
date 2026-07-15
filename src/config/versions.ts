@@ -31,6 +31,10 @@ export const versions = {
     label: "8. 多様性ROI版",
     description: "効率・満足・発見など、多様な価値から自分らしい選択をする統合最終候補",
   },
+  "simple-experience": {
+    label: "9. シンプル体験版",
+    description: "今の気分と条件から、迷わず一つの過ごし方を決める",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -40,7 +44,8 @@ export const defaultVersion: VersionKey = "simple";
 export function normalizeVersion(value: string | null): VersionKey {
   if (value === "7") return "trophy";
   if (value === "8") return "diversity-roi";
-  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple") {
+  if (value === "9") return "simple-experience";
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple-experience" || value === "simple") {
     return value;
   }
   return defaultVersion;
