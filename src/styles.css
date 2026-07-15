@@ -3690,3 +3690,109 @@ button:disabled {
   .diversity-value-options button { font-size: 9px; }
   .diversity-profile-strip { font-size: 10px; }
 }
+
+/* Diversity ROI: compact home, comparable options, and separate value layers. */
+.diversity-life-roi-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  border-left: 3px solid #7d69c9;
+  color: #5d7184;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.45;
+  padding: 2px 4px 2px 9px;
+}
+
+.diversity-life-roi-note svg { flex: 0 0 auto; color: #8066bc; }
+.diversity-life-roi-note strong { color: #3f5c78; }
+
+.diversity-condition-card {
+  overflow: hidden;
+  border: 1px solid #dbe8ef;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(30, 83, 120, .05);
+}
+
+.diversity-condition-summary {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  border: 0;
+  background: #fff;
+  color: #397090;
+  font: inherit;
+  padding: 10px 13px;
+  text-align: left;
+}
+
+.diversity-condition-summary > span { display: grid; grid-template-columns: 17px 1fr; align-items: center; gap: 1px 7px; }
+.diversity-condition-summary > span > svg { grid-row: 1 / span 2; color: #2585c5; }
+.diversity-condition-summary small { color: #7792a2; font-size: 10px; font-weight: 850; }
+.diversity-condition-summary strong { color: #214b69; font-size: 13px; font-weight: 950; }
+.diversity-condition-summary > svg { color: #7190a3; transition: transform .18s ease; }
+.diversity-condition-summary > svg.is-open { transform: rotate(90deg); }
+
+.diversity-condition-editor { display: grid; gap: 10px; border-top: 1px solid #e5eef3; background: #f9fcfe; padding: 11px 13px 13px; }
+.diversity-condition-editor > div { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 8px; }
+.diversity-condition-editor > div > span { color: #597688; font-size: 10px; font-weight: 900; }
+.diversity-condition-editor > div > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.diversity-condition-editor button { min-height: 34px; border: 1px solid #d9e5ec; border-radius: 9px; background: #fff; color: #6d8797; font: inherit; font-size: 10px; font-weight: 850; }
+.diversity-condition-editor button.is-active { border-color: #2587ca; background: #edf7ff; color: #176fac; }
+
+.diversity-balance-card.is-collapsed { padding-top: 12px; padding-bottom: 12px; }
+.diversity-balance-card.is-collapsed .diversity-balance-summary { margin-bottom: 0; color: #37708f; }
+
+.diversity-quick-compare {
+  border: 1px solid #dce9f0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f8fcff, #fff);
+  box-shadow: 0 8px 20px rgba(30, 83, 120, .05);
+  padding: 12px;
+}
+
+.diversity-quick-compare-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.diversity-quick-compare-heading h3 { margin: 2px 0 0; color: #214866; font-size: 14px; font-weight: 950; }
+.diversity-compare-inline-button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 4px; border: 1px solid #bfe0f3; border-radius: 10px; background: #fff; color: #1876b6; font: inherit; font-size: 10px; font-weight: 900; padding: 0 8px; white-space: nowrap; }
+.diversity-quick-compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.diversity-quick-option { display: grid; gap: 4px; min-width: 0; border-radius: 11px; background: #edf7ff; color: #347aa7; padding: 8px 6px; }
+.diversity-quick-option.accent-green { background: #eff9f4; color: #328563; }
+.diversity-quick-option.accent-purple { background: #f5f1ff; color: #775db7; }
+.diversity-quick-option strong { overflow: hidden; color: inherit; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
+.diversity-quick-option span { display: flex; align-items: center; gap: 2px; color: #5a778c; font-size: 9px; font-weight: 850; }
+
+.diversity-plan-choice-copy { margin: 8px 0 0; color: #206fa6; font-size: 13px; font-weight: 950; line-height: 1.35; }
+.accent-green .diversity-plan-choice-copy { color: #27845f; }
+.accent-purple .diversity-plan-choice-copy { color: #765ab9; }
+
+.diversity-return-section-heading { display: flex; align-items: center; gap: 6px; color: #2e7e9d; }
+.diversity-return-section-heading h3 { margin: 0; color: #285873; font-size: 14px; font-weight: 950; }
+.diversity-personal-return-card,
+.diversity-city-contribution-card { display: grid; gap: 9px; border-radius: 17px; padding: 13px; }
+.diversity-personal-return-card { border: 1px solid #d6e8ee; background: #fff; box-shadow: 0 8px 19px rgba(30, 83, 120, .05); }
+.diversity-personal-return-card .diversity-return-section-heading { color: #2887b5; }
+.diversity-city-contribution-card { border: 1px solid #d7eadd; background: #f3fbf7; color: #39765c; }
+.diversity-city-contribution-card .diversity-return-section-heading { color: #288265; }
+.diversity-city-contribution-card p { margin: 0; color: #668374; font-size: 10px; font-weight: 800; line-height: 1.45; }
+.diversity-contribution-list { display: grid; gap: 5px; }
+.diversity-contribution-list span { display: flex; align-items: center; gap: 5px; color: #437a61; font-size: 11px; font-weight: 850; }
+.diversity-contribution-list svg { color: #2e9a70; }
+
+.diversity-my-more-button { min-height: 36px; justify-self: start; border: 0; background: transparent; color: #2279b4; font: inherit; font-size: 11px; font-weight: 900; padding: 0; }
+.diversity-my-city-card { gap: 10px; }
+.diversity-city-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.diversity-city-metrics span { display: grid; min-height: 58px; place-items: center; align-content: center; border-radius: 11px; background: rgba(255, 255, 255, .74); color: #278264; font-size: 15px; font-weight: 950; text-align: center; }
+.diversity-city-metrics small { color: #648473; font-size: 9px; font-weight: 800; }
+
+@media (max-width: 380px) {
+  .diversity-life-roi-note { font-size: 9px; }
+  .diversity-quick-compare { padding: 10px; }
+  .diversity-quick-option { padding: 7px 5px; }
+  .diversity-quick-option strong { font-size: 10px; }
+  .diversity-quick-option span { font-size: 8px; }
+  .diversity-compare-inline-button { font-size: 9px; padding: 0 6px; }
+}
