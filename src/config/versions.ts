@@ -35,6 +35,10 @@ export const versions = {
     label: "9. シンプル体験版",
     description: "今の気分と条件から、迷わず一つの過ごし方を決める",
   },
+  "tokyo-recommendation": {
+    label: "V10：東京おすすめスポット版",
+    description: "あなたに合う選択肢に、東京にとって良い選択もプラス",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -45,7 +49,8 @@ export function normalizeVersion(value: string | null): VersionKey {
   if (value === "7") return "trophy";
   if (value === "8") return "diversity-roi";
   if (value === "9") return "simple-experience";
-  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple-experience" || value === "simple") {
+  if (value === "10") return "tokyo-recommendation";
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple-experience" || value === "tokyo-recommendation" || value === "simple") {
     return value;
   }
   return defaultVersion;

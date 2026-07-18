@@ -25,6 +25,7 @@ import { VisualHistory, VisualVersion } from "./components/versions/VisualVersio
 import { TrophyCollection, TrophyVersion } from "./components/versions/TrophyVersion";
 import { DiversityRoiMyPage, DiversityRoiVersion } from "./components/versions/DiversityRoiVersion";
 import { SimpleExperienceMyRoi, SimpleExperienceVersion } from "./components/versions/SimpleExperienceVersion";
+import { TokyoRecommendationMyRoi, TokyoRecommendationVersion } from "./components/versions/TokyoRecommendationVersion";
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
@@ -177,6 +178,7 @@ export default function App() {
             {view === "home" && version === "trophy" && <TrophyVersion onCollection={() => setView("roi")} />}
             {view === "home" && version === "diversity-roi" && <DiversityRoiVersion onMyRoi={() => setView("roi")} />}
             {view === "home" && version === "simple-experience" && <SimpleExperienceVersion onMyRoi={() => setView("roi")} />}
+            {view === "home" && version === "tokyo-recommendation" && <TokyoRecommendationVersion onMyRoi={() => setView("roi")} />}
             {view === "choice" && selectedCandidate && (
               <ChoicePanel
                 candidate={selectedCandidate}
@@ -191,7 +193,8 @@ export default function App() {
             {view === "roi" && version === "trophy" && <TrophyCollection />}
             {view === "roi" && version === "diversity-roi" && <DiversityRoiMyPage />}
             {view === "roi" && version === "simple-experience" && <SimpleExperienceMyRoi />}
-            {view === "roi" && version !== "visual" && version !== "trophy" && version !== "diversity-roi" && version !== "simple-experience" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
+            {view === "roi" && version === "tokyo-recommendation" && <TokyoRecommendationMyRoi />}
+            {view === "roi" && version !== "visual" && version !== "trophy" && version !== "diversity-roi" && version !== "simple-experience" && version !== "tokyo-recommendation" && <MyRoiPanel onReflect={() => setView("reflect")} selectedCandidate={selectedCandidate} battleHistory={battleHistory} />}
             {view === "reflect" && (
               <ReflectPanel
                 candidate={selectedCandidate}
