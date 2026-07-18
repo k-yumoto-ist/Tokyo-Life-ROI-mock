@@ -36,7 +36,7 @@ export const versions = {
     description: "今の気分と条件から、迷わず一つの過ごし方を決める",
   },
   "tokyo-recommendation": {
-    label: "V10：東京おすすめスポット版",
+    label: "10. 東京おすすめスポット版",
     description: "あなたに合う選択肢に、東京にとって良い選択もプラス",
   },
 } as const;
