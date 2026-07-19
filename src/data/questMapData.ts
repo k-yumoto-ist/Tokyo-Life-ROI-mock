@@ -37,41 +37,85 @@ export type QuestDefinition = {
   difficulty: QuestDifficulty;
   summary: string;
   condition: string;
-  roiGain: number;
-  minimumRoi: number;
+  basePoints: number;
+  minimumQuestPoints: number;
+  roiAdjustment?: number;
   distanceKm: number;
   travelMinutes: number;
   values: { key: QuestValueKey; label: string; points: number }[];
   isComposite?: boolean;
 };
 
-export type QuestHistoryEntry = {
+export type RoiFeedback = {
+  satisfaction: "great" | "good" | "low";
+  fatigue: "light" | "high";
+  familyEnjoyment: boolean;
+  timeExpectation: "as-planned" | "longer";
+};
+
+export type RoiEvaluation = {
+  predictedMyRoi: number;
+  actualMyRoi?: number;
+  userAverageMyRoi: number;
+  reasons: string[];
+  feedback?: RoiFeedback;
+};
+
+export type QuestReward = {
+  basePoints: number;
+  firstVisitBonus: number;
+  newAreaBonus: number;
+  newCategoryBonus: number;
+  streakBonus: number;
+  roiBonus: number;
+  urbanContributionBonus: number;
+  totalPoints: number;
+};
+
+export type RoiHistoryItem = {
   questId: string;
   questTitle: string;
   spotId: string;
   completedAt: string;
-  roiBefore: number;
-  roiAfter: number;
+  category: QuestSpotCategory;
+  predictedMyRoi: number;
+  actualMyRoi: number;
+  feedback: RoiFeedback;
 };
 
 export type QuestMapProgress = {
-  myRoi: number;
+  questPoints: number;
+  completedQuestCount: number;
   completedQuestIds: string[];
   visitedSpotIds: string[];
   visitedAreas: string[];
+  unlockedQuestIds: string[];
   trophyIds: string[];
-  history: QuestHistoryEntry[];
+  consecutiveQuestDays: number;
+  roiHistory: RoiHistoryItem[];
 };
 
-export const questMapStorageKey = "tokyo-life-roi-quest-map-progress";
+export const questMapProgressStorageKey = "tokyo-life-roi-quest-map-progress-v2";
+export const questMapRoiHistoryStorageKey = "tokyo-life-roi-quest-map-roi-history-v2";
+export const questMapLegacyStorageKey = "tokyo-life-roi-quest-map-progress";
 
 export const initialQuestMapProgress: QuestMapProgress = {
-  myRoi: 58,
+  questPoints: 1140,
+  completedQuestCount: 12,
   completedQuestIds: ["ueno-learning-walk", "hibiya-reset"],
   visitedSpotIds: ["ueno-park", "national-science-museum", "hibiya-park", "tokyo-forum", "inokashira-park", "koishikawa-korakuen", "mot", "hamarikyu", "central-library"],
   visitedAreas: ["台東区", "千代田区", "三鷹市", "文京区", "江東区"],
+  unlockedQuestIds: ["water-family-learning", "rainbow-public", "mot-culture", "yumenoshima-green"],
   trophyIds: ["first-learning", "off-peak-walker"],
-  history: [],
+  consecutiveQuestDays: 0,
+  roiHistory: [
+    { questId: "family-library", questTitle: "図書館で親子読書", spotId: "central-library", completedAt: "2026-07-16T05:30:00.000Z", category: "public", predictedMyRoi: 76, actualMyRoi: 74, feedback: { satisfaction: "good", fatigue: "light", familyEnjoyment: true, timeExpectation: "as-planned" } },
+    { questId: "park-reset", questTitle: "日比谷で60分リセット", spotId: "hibiya-park", completedAt: "2026-07-12T04:00:00.000Z", category: "health", predictedMyRoi: 73, actualMyRoi: 72, feedback: { satisfaction: "good", fatigue: "light", familyEnjoyment: false, timeExpectation: "as-planned" } },
+    { questId: "ueno-learning-walk", questTitle: "上野で学びをつなぐ", spotId: "national-science-museum", completedAt: "2026-07-08T03:00:00.000Z", category: "learning", predictedMyRoi: 75, actualMyRoi: 70, feedback: { satisfaction: "good", fatigue: "high", familyEnjoyment: true, timeExpectation: "longer" } },
+    { questId: "inokashira-family", questTitle: "井の頭で家族散歩", spotId: "inokashira-park", completedAt: "2026-06-28T04:00:00.000Z", category: "nature", predictedMyRoi: 80, actualMyRoi: 78, feedback: { satisfaction: "great", fatigue: "light", familyEnjoyment: true, timeExpectation: "as-planned" } },
+    { questId: "forum-break", questTitle: "東京駅で小休憩", spotId: "tokyo-forum", completedAt: "2026-06-20T03:00:00.000Z", category: "culture", predictedMyRoi: 79, actualMyRoi: 76, feedback: { satisfaction: "good", fatigue: "light", familyEnjoyment: false, timeExpectation: "as-planned" } },
+    { questId: "kasai-day", questTitle: "葛西で自然にふれる", spotId: "kasai-park", completedAt: "2026-06-15T03:00:00.000Z", category: "nature", predictedMyRoi: 89, actualMyRoi: 88, feedback: { satisfaction: "great", fatigue: "light", familyEnjoyment: true, timeExpectation: "as-planned" } },
+  ],
 };
 
 export const questCategoryLabels: Record<QuestSpotCategory, string> = {
@@ -112,15 +156,15 @@ export const questMapSpots: QuestSpot[] = [
 ];
 
 export const questDefinitions: QuestDefinition[] = [
-  { id: "water-family-learning", title: "無料で知識を増やす90分", spotId: "water-science", difficulty: "beginner", summary: "家族で水のしくみを発見しよう", condition: "予算1,000円以内・屋内", roiGain: 3, minimumRoi: 0, distanceKm: 5.8, travelMinutes: 28, values: [{ key: "learning", label: "学び", points: 18 }, { key: "family", label: "家族", points: 10 }, { key: "cost", label: "コスト", points: 15 }, { key: "urbanContribution", label: "都市", points: 6 }] },
-  { id: "rainbow-public", title: "近くの無料公共施設を使おう", spotId: "rainbow-sewerage", difficulty: "beginner", summary: "水環境を親子で体験する", condition: "無料・60分以内", roiGain: 2, minimumRoi: 0, distanceKm: 6.1, travelMinutes: 30, values: [{ key: "learning", label: "学び", points: 16 }, { key: "cost", label: "コスト", points: 15 }, { key: "urbanContribution", label: "都市", points: 12 }] },
-  { id: "mot-culture", title: "混雑を避けてアートに触れよう", spotId: "mot", difficulty: "beginner", summary: "木場エリアで静かな文化時間", condition: "混雑少なめ・2時間", roiGain: 2, minimumRoi: 0, distanceKm: 4.2, travelMinutes: 24, values: [{ key: "satisfaction", label: "満足", points: 14 }, { key: "learning", label: "学び", points: 12 }, { key: "urbanContribution", label: "都市", points: 8 }] },
-  { id: "yumenoshima-green", title: "雨でも緑を楽しむ90分", spotId: "yumenoshima", difficulty: "intermediate", summary: "熱帯植物と環境を学ぶ屋内クエスト", condition: "屋内・予算1,000円以内", roiGain: 2, minimumRoi: 30, distanceKm: 7.4, travelMinutes: 34, values: [{ key: "learning", label: "学び", points: 14 }, { key: "satisfaction", label: "満足", points: 13 }, { key: "urbanContribution", label: "都市", points: 10 }] },
-  { id: "composite-koto", title: "学びと家族時間を1回の移動で", spotId: "mot", difficulty: "intermediate", summary: "水の科学館と現代美術館をつなぐ複合ルート", condition: "My ROI 60・半日", roiGain: 4, minimumRoi: 60, distanceKm: 8.2, travelMinutes: 38, values: [{ key: "time", label: "時間", points: 12 }, { key: "learning", label: "学び", points: 20 }, { key: "family", label: "家族", points: 16 }, { key: "discovery", label: "発見", points: 12 }], isComposite: true },
-  { id: "new-area-architecture", title: "未訪問エリアで東京の建築を知る", spotId: "edo-open-air", difficulty: "advanced", summary: "小金井で歴史的建築を巡る", condition: "My ROI 70・未訪問エリア", roiGain: 4, minimumRoi: 70, distanceKm: 24.6, travelMinutes: 62, values: [{ key: "learning", label: "学び", points: 18 }, { key: "health", label: "健康", points: 12 }, { key: "discovery", label: "発見", points: 20 }] },
-  { id: "secret-rain", title: "雨の東京で新しい学びを", spotId: "sona-area", difficulty: "secret", summary: "天候を味方にするシークレットクエスト", condition: "My ROI 85・雨の日", roiGain: 5, minimumRoi: 85, distanceKm: 6.5, travelMinutes: 31, values: [{ key: "learning", label: "学び", points: 22 }, { key: "family", label: "家族", points: 16 }, { key: "urbanContribution", label: "都市", points: 18 }] },
-  { id: "ueno-learning-walk", title: "上野で学びをつなぐ", spotId: "national-science-museum", difficulty: "intermediate", summary: "公園と科学博物館をまとめて巡る", condition: "達成済み", roiGain: 2, minimumRoi: 30, distanceKm: 4.4, travelMinutes: 22, values: [{ key: "learning", label: "学び", points: 18 }, { key: "family", label: "家族", points: 12 }] },
-  { id: "hibiya-reset", title: "都心で60分リセット", spotId: "hibiya-park", difficulty: "beginner", summary: "短い散歩で心と体に余白を", condition: "達成済み", roiGain: 1, minimumRoi: 0, distanceKm: 1.8, travelMinutes: 12, values: [{ key: "health", label: "健康", points: 16 }, { key: "time", label: "時間", points: 12 }] },
+  { id: "water-family-learning", title: "無料で知識を増やす90分", spotId: "water-science", difficulty: "beginner", summary: "家族で水のしくみを発見しよう", condition: "予算1,000円以内・屋内", basePoints: 100, minimumQuestPoints: 0, roiAdjustment: -4, distanceKm: 5.8, travelMinutes: 28, values: [{ key: "learning", label: "学び", points: 18 }, { key: "family", label: "家族", points: 10 }, { key: "cost", label: "コスト", points: 15 }, { key: "urbanContribution", label: "都市", points: 6 }] },
+  { id: "rainbow-public", title: "近くの無料公共施設を使おう", spotId: "rainbow-sewerage", difficulty: "beginner", summary: "水環境を親子で体験する", condition: "無料・60分以内", basePoints: 100, minimumQuestPoints: 0, roiAdjustment: -4, distanceKm: 6.1, travelMinutes: 30, values: [{ key: "learning", label: "学び", points: 16 }, { key: "cost", label: "コスト", points: 15 }, { key: "urbanContribution", label: "都市", points: 12 }] },
+  { id: "mot-culture", title: "混雑を避けてアートに触れよう", spotId: "mot", difficulty: "beginner", summary: "木場エリアで静かな文化時間", condition: "混雑少なめ・2時間", basePoints: 100, minimumQuestPoints: 0, distanceKm: 4.2, travelMinutes: 24, values: [{ key: "satisfaction", label: "満足", points: 14 }, { key: "learning", label: "学び", points: 12 }, { key: "urbanContribution", label: "都市", points: 8 }] },
+  { id: "yumenoshima-green", title: "雨でも緑を楽しむ90分", spotId: "yumenoshima", difficulty: "intermediate", summary: "熱帯植物と環境を学ぶ屋内クエスト", condition: "Quest Point 500・屋内", basePoints: 110, minimumQuestPoints: 500, distanceKm: 7.4, travelMinutes: 34, values: [{ key: "learning", label: "学び", points: 14 }, { key: "satisfaction", label: "満足", points: 13 }, { key: "urbanContribution", label: "都市", points: 10 }] },
+  { id: "composite-koto", title: "学びと家族時間を1回の移動で", spotId: "mot", difficulty: "intermediate", summary: "水の科学館と現代美術館をつなぐ複合ルート", condition: "Quest Point 1,200・半日", basePoints: 120, minimumQuestPoints: 1200, distanceKm: 8.2, travelMinutes: 38, values: [{ key: "time", label: "時間", points: 12 }, { key: "learning", label: "学び", points: 20 }, { key: "family", label: "家族", points: 16 }, { key: "discovery", label: "発見", points: 12 }], isComposite: true },
+  { id: "new-area-architecture", title: "未訪問エリアで東京の建築を知る", spotId: "edo-open-air", difficulty: "advanced", summary: "小金井で歴史的建築を巡る", condition: "Quest Point 2,000・未訪問エリア", basePoints: 130, minimumQuestPoints: 2000, distanceKm: 24.6, travelMinutes: 62, values: [{ key: "learning", label: "学び", points: 18 }, { key: "health", label: "健康", points: 12 }, { key: "discovery", label: "発見", points: 20 }] },
+  { id: "secret-rain", title: "雨の東京で新しい学びを", spotId: "sona-area", difficulty: "secret", summary: "天候を味方にするシークレットクエスト", condition: "Quest Point 3,000・雨の日", basePoints: 150, minimumQuestPoints: 3000, distanceKm: 6.5, travelMinutes: 31, values: [{ key: "learning", label: "学び", points: 22 }, { key: "family", label: "家族", points: 16 }, { key: "urbanContribution", label: "都市", points: 18 }] },
+  { id: "ueno-learning-walk", title: "上野で学びをつなぐ", spotId: "national-science-museum", difficulty: "intermediate", summary: "公園と科学博物館をまとめて巡る", condition: "達成済み", basePoints: 110, minimumQuestPoints: 500, distanceKm: 4.4, travelMinutes: 22, values: [{ key: "learning", label: "学び", points: 18 }, { key: "family", label: "家族", points: 12 }] },
+  { id: "hibiya-reset", title: "都心で60分リセット", spotId: "hibiya-park", difficulty: "beginner", summary: "短い散歩で心と体に余白を", condition: "達成済み", basePoints: 100, minimumQuestPoints: 0, distanceKm: 1.8, travelMinutes: 12, values: [{ key: "health", label: "健康", points: 16 }, { key: "time", label: "時間", points: 12 }] },
 ];
 
 export const demoLocation = { latitude: 35.6812, longitude: 139.7671, label: "東京駅（デモ位置）" };

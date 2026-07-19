@@ -4,7 +4,9 @@ import { questCategoryLabels, type QuestDefinition, type QuestSpot } from "../..
 type QuestMapDetailSheetProps = {
   quest: QuestDefinition;
   spot: QuestSpot;
-  predictedRoi: number;
+  predictedMyRoi: number;
+  rewardRange: { minimum: number; maximum: number };
+  fitReasons: string[];
   visited: boolean;
   onClose: () => void;
   onStart: () => void;
@@ -18,7 +20,7 @@ const scoreRows = [
   ["都市へのプラス", "urbanContribution", "green"],
 ] as const;
 
-export function QuestMapDetailSheet({ quest, spot, predictedRoi, visited, onClose, onStart, onRoute }: QuestMapDetailSheetProps) {
+export function QuestMapDetailSheet({ quest, spot, predictedMyRoi, rewardRange, fitReasons, visited, onClose, onStart, onRoute }: QuestMapDetailSheetProps) {
   return (
     <div className="quest-map-sheet-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="quest-map-detail-sheet" role="dialog" aria-modal="true" aria-label={`${spot.name}の詳細`} onMouseDown={(event) => event.stopPropagation()}>
@@ -38,14 +40,14 @@ export function QuestMapDetailSheet({ quest, spot, predictedRoi, visited, onClos
           <div><Clock3 size={17} /><strong>{quest.travelMinutes}分</strong><span>移動</span></div>
           <div><WalletCards size={17} /><strong>{spot.estimatedCost.toLocaleString("ja-JP")}円</strong><span>費用</span></div>
           <div><BookOpen size={17} /><strong>{spot.estimatedStayMinutes}分</strong><span>滞在</span></div>
-          <div><Sparkles size={17} /><strong>{predictedRoi}</strong><span>予測ROI</span></div>
+          <div><Sparkles size={17} /><strong>{predictedMyRoi}</strong><span>予測My ROI</span></div>
         </div>
         <p className="quest-map-detail-description">{spot.description}</p>
         <section className="quest-map-fit-reason">
-          <h3>今のあなたに合う理由</h3>
-          <p><Check size={15} />家族で学びたい今日の目的に合う</p>
-          <p><Check size={15} />予算内で、移動と滞在を90分前後にまとめられる</p>
+          <h3>あなたに合う理由</h3>
+          {fitReasons.map((reason) => <p key={reason}><Check size={15} />{reason}</p>)}
         </section>
+        <section className="quest-map-reward-preview"><span>クエスト達成ポイント</span><strong>{rewardRange.minimum}〜{rewardRange.maximum} QP</strong><p>基本達成 {quest.basePoints}pt・高ROI選択ボーナスを含む</p></section>
         <div className="quest-map-score-bars">
           {scoreRows.map(([label, key, tone]) => <div key={key} className={`tone-${tone}`}><span>{label}</span><i><b style={{ width: `${spot.scores[key]}%` }} /></i><strong>{spot.scores[key]}</strong></div>)}
         </div>

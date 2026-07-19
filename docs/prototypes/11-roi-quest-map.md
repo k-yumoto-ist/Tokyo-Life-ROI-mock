@@ -1,49 +1,44 @@
-# 11. ROI Quest Map版
+# 11. ROI Quest Map
 
-## コンセプト
+## Concept
 
-東京の実在スポットを2D地図上のクエストとして表示し、ユーザーが選んだ行動を通じてMy ROIと行動の幅を育てていく試作です。
+ROI Quest Map places Tokyo spots on a 2D map and turns nearby choices into small quests. It is not a game about maximizing a single score. My ROI helps users evaluate whether a choice fits their individual situation; Quest Point rewards taking action and discovering more of Tokyo.
 
-「自分を育てるほど、東京の新しい選択肢が解放される」をメインコピーに、時間・費用だけでなく、学び、家族時間、健康、新規体験、都市貢献を含む選択価値を扱います。
+> My ROI finds a choice that fits you. Quests turn it into action. Quest Point opens the next choice.
 
-## 主な体験
+## My ROI and Quest Point
 
-1. 地図上のデモ位置または現在地を確認する
-2. 今日の目的を選ぶ
-3. 条件に合うクエストを3件程度から選ぶ
-4. スポット詳細で費用、滞在時間、価値、公共施設としてのプラスを確認する
-5. クエストを開始し、デモ用チェックインで達成する
-6. My ROI上昇、新しいトロフィー、解放クエストを確認する
-7. 東京図鑑、My ROI、設定で進捗を振り返る
+| Measure | Role | When shown | How it changes |
+| --- | --- | --- | --- |
+| Predicted My ROI | Personal fit before action | Quest card and spot detail | Calculated from profile, purpose, budget, time, family context, travel load, and spot values |
+| Actual My ROI | Personal fit after action | Completion review and My ROI trends | Calculated from brief feedback; stored as history, not added up |
+| Quest Point | Exploration and completion reward | Quest card, completion reward, My page | Granted for completion, first visits, new areas/categories, streaks, a small ROI bonus, and urban contribution |
 
-## 地図とスポット
+My ROI is never a balance, level, or unlock condition. Quest Point is the progression system.
 
-- LeafletとOpenStreetMapタイルを使用
-- 東京都内の実在スポット24件をローカルデータとして表示
-- 学び、家族、自然、文化、健康、公共、食のカテゴリをアイコン付きピンで区別
-- クエスト対象、ロック中、訪問済み、東京都おすすめの状態を地図上で表現
-- 位置情報が取得できない場合は東京駅のデモ位置を使用
+## Demo Flow
 
-## My ROIと解放
+1. Open `/?version=quest-map` or choose `11. ROI Quest Map` in the prototype switcher.
+2. The map opens at Tokyo Station when location is unavailable or permission is declined.
+3. Choose `家族で学びたい`.
+4. Open the Tokyo Water Science Museum quest and review its predicted My ROI and fit reasons.
+5. Start the quest, then use the demo check-in control.
+6. Complete the short feedback. The demo default displays a predicted My ROI of `84` and an actual My ROI of `79`.
+7. The reward is calculated separately: `100` base + `30` first visit + `10` high-ROI selection + `5` urban contribution = `145 Quest Point`.
+8. The demo progresses from `1,140 QP` / Quest Level 2 to `1,285 QP` / Quest Level 3, unlocking the composite quest.
+9. In `My ROI`, inspect personal fit trends separately from Quest Point and Quest Level progress.
 
-My ROIは、時間効率、金銭効率、満足度、学び、家族、健康、都市貢献を重み付けして扱う0〜100のモック指標です。高い数値を唯一の正解にはせず、選択できるクエストや見える東京の幅が広がる仕組みにしています。
+## Data and Persistence
 
-- 0〜29: 初級クエスト
-- 30〜49: テーマ別クエスト
-- 50〜69: 複合条件クエスト
-- 70〜84: エリア探索クエスト
-- 85以上: シークレットクエスト
+- 24 local mock spot records represent real Tokyo locations. Coordinates are used for map placement; opening hours, costs, travel time, crowding, and scores are demo values.
+- Quest definitions, spot data, and types are in `src/data/questMapData.ts`.
+- Personal ROI calculation, feedback evaluation, rewards, unlocks, and localStorage access are in `src/lib/questMapScoring.ts`.
+- Quest progress and ROI history use separate localStorage keys:
+  - `tokyo-life-roi-quest-map-progress-v2`
+  - `tokyo-life-roi-quest-map-roi-history-v2`
 
-初期値はMy ROI 58です。東京都水の科学館の「無料で知識を増やす90分」を達成すると61になり、複合クエストが解放されます。
+## Current Constraints
 
-## 保存とリセット
-
-My ROI、達成済みクエスト、訪問スポット・エリア、トロフィー、履歴、進行中クエストはブラウザの`localStorage`に保存します。設定画面の「V11のデモ状態をリセット」で初期状態へ戻せます。
-
-## モック範囲
-
-地図タイルとブラウザ位置情報以外はローカルのデモデータです。経路、営業時間、料金、混雑、施設の空き状況はリアルタイム連携していません。本番では交通・施設・混雑データや個人設定を使い、クエスト生成とスコアを更新する想定です。
-
-## 開き方
-
-`/?version=quest-map` または `/?version=11`
+- Map tiles are from OpenStreetMap through Leaflet.
+- Location, routes, opening hours, costs, crowding, check-ins, rewards, and recommendations are all mock behavior.
+- There is no login, backend database, live route API, real-time crowd data, or background location tracking.

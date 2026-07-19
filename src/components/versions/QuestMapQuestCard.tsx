@@ -4,13 +4,15 @@ import type { QuestDefinition, QuestSpot } from "../../data/questMapData";
 type QuestMapQuestCardProps = {
   quest: QuestDefinition;
   spot: QuestSpot;
-  predictedRoi: number;
+  predictedMyRoi: number;
+  rewardRange: { minimum: number; maximum: number };
+  fitReason?: string;
   locked?: boolean;
   onOpen: () => void;
   onStart: () => void;
 };
 
-export function QuestMapQuestCard({ quest, spot, predictedRoi, locked = false, onOpen, onStart }: QuestMapQuestCardProps) {
+export function QuestMapQuestCard({ quest, spot, predictedMyRoi, rewardRange, fitReason, locked = false, onOpen, onStart }: QuestMapQuestCardProps) {
   return (
     <article className={`quest-map-quest-card ${locked ? "is-locked" : ""}`}>
       <div className="quest-map-card-kicker">
@@ -27,9 +29,10 @@ export function QuestMapQuestCard({ quest, spot, predictedRoi, locked = false, o
       <div className="quest-map-card-values">
         {quest.values.slice(0, 3).map((value) => <span key={value.key}>{value.key === "family" ? <UsersRound size={13} /> : <Sparkles size={13} />}{value.label} +{value.points}</span>)}
       </div>
+      {!locked && fitReason && <p className="quest-map-card-fit-reason">{fitReason}</p>}
       {locked ? <p className="quest-map-unlock-condition"><LockKeyhole size={14} />{quest.condition}</p> : <div className="quest-map-card-bottom">
         <button className="quest-map-card-detail" onClick={onOpen}>詳細</button>
-        <strong>予測ROI {predictedRoi}</strong>
+        <strong>予測My ROI {predictedMyRoi}<small>{rewardRange.minimum}〜{rewardRange.maximum} QP</small></strong>
         <button className="quest-map-card-start" onClick={onStart} aria-label={`${quest.title}を開始`}>開始<ChevronRight size={15} /></button>
       </div>}
     </article>
