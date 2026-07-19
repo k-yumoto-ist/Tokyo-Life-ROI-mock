@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   CalendarPlus,
@@ -29,6 +29,8 @@ import { TokyoRecommendationMyRoi, TokyoRecommendationVersion } from "./componen
 import { normalizeVersion, versions, type VersionKey } from "./config/versions";
 import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
+
+const QuestMapVersion = lazy(() => import("./components/versions/QuestMapVersion").then((module) => ({ default: module.QuestMapVersion })));
 
 type PrimaryTab = "home" | "roi" | "settings";
 type AppView = PrimaryTab | "choice" | "reflect";
@@ -166,8 +168,13 @@ export default function App() {
   return (
     <div className="min-h-[100dvh] bg-[#edf7ff] text-ink">
       <main className="app-shell">
-        <div className="phone-surface">
-          <section className="screen-content home-hero prototype-screen">
+        <div className={`phone-surface ${version === "quest-map" ? "quest-map-surface" : ""}`}>
+          <section className={`screen-content home-hero prototype-screen ${version === "quest-map" ? "quest-map-host" : ""}`}>
+            {version === "quest-map" ? (
+              <Suspense fallback={<div className="quest-map-loading"><span /><p>東京の地図を準備中</p></div>}>
+                <QuestMapVersion currentVersion={version} onVersionChange={changeVersion} />
+              </Suspense>
+            ) : <>
             <Header version={version} onVersionChange={changeVersion} onSettings={() => setView("settings")} />
             {view === "home" && version === "simple" && <SimpleVersion onSelect={handleSelect} onSettings={() => setView("settings")} />}
             {view === "home" && version === "form" && <FormVersion onSelect={handleSelect} />}
@@ -220,8 +227,9 @@ export default function App() {
                 {toast}
               </div>
             )}
+            </>}
           </section>
-          <BottomNavigation active={navActive} onChange={(nextView) => setView(nextView)} />
+          {version !== "quest-map" && <BottomNavigation active={navActive} onChange={(nextView) => setView(nextView)} />}
         </div>
       </main>
     </div>
