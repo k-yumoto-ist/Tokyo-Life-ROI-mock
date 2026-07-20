@@ -31,6 +31,7 @@ import type { RoiCandidate } from "./data/mockData";
 import { battleHistoryStorageKey, type BattleHistory } from "./data/battleMockData";
 
 const QuestMapVersion = lazy(() => import("./components/versions/QuestMapVersion").then((module) => ({ default: module.QuestMapVersion })));
+const FinalVersion = lazy(() => import("./components/versions/final/FinalVersion").then((module) => ({ default: module.FinalVersion })));
 
 type PrimaryTab = "home" | "roi" | "settings";
 type AppView = PrimaryTab | "choice" | "reflect";
@@ -168,11 +169,15 @@ export default function App() {
   return (
     <div className="min-h-[100dvh] bg-[#edf7ff] text-ink">
       <main className="app-shell">
-        <div className={`phone-surface ${version === "quest-map" ? "quest-map-surface" : ""}`}>
-          <section className={`screen-content home-hero prototype-screen ${version === "quest-map" ? "quest-map-host" : ""}`}>
+        <div className={`phone-surface ${version === "quest-map" ? "quest-map-surface" : ""} ${version === "final" ? "final-surface" : ""}`}>
+          <section className={`screen-content home-hero prototype-screen ${version === "quest-map" ? "quest-map-host" : ""} ${version === "final" ? "final-host" : ""}`}>
             {version === "quest-map" ? (
               <Suspense fallback={<div className="quest-map-loading"><span /><p>東京の地図を準備中</p></div>}>
                 <QuestMapVersion currentVersion={version} onVersionChange={changeVersion} />
+              </Suspense>
+            ) : version === "final" ? (
+              <Suspense fallback={<div className="final-loading-fallback"><span /><p>今日の選択肢を準備中</p></div>}>
+                <FinalVersion currentVersion={version} onVersionChange={changeVersion} />
               </Suspense>
             ) : <>
             <Header version={version} onVersionChange={changeVersion} onSettings={() => setView("settings")} />
@@ -229,7 +234,7 @@ export default function App() {
             )}
             </>}
           </section>
-          {version !== "quest-map" && <BottomNavigation active={navActive} onChange={(nextView) => setView(nextView)} />}
+          {version !== "quest-map" && version !== "final" && <BottomNavigation active={navActive} onChange={(nextView) => setView(nextView)} />}
         </div>
       </main>
     </div>

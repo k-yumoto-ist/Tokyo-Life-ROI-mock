@@ -43,6 +43,10 @@ export const versions = {
     label: "11. ROI Quest Map版",
     description: "今日の選択で、自分と東京の新しい可能性を解放する",
   },
+  final: {
+    label: "Final. 統合版",
+    description: "選択と満足度を学び、使うほど自分向けに変わる",
+  },
 } as const;
 
 export type VersionKey = keyof typeof versions;
@@ -55,7 +59,7 @@ export function normalizeVersion(value: string | null): VersionKey {
   if (value === "9") return "simple-experience";
   if (value === "10") return "tokyo-recommendation";
   if (value === "11") return "quest-map";
-  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple-experience" || value === "tokyo-recommendation" || value === "quest-map" || value === "simple") {
+  if (value === "form" || value === "chat" || value === "battle" || value === "city-contribution" || value === "visual" || value === "trophy" || value === "diversity-roi" || value === "simple-experience" || value === "tokyo-recommendation" || value === "quest-map" || value === "final" || value === "simple") {
     return value;
   }
   return defaultVersion;

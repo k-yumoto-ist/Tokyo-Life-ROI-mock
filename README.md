@@ -17,6 +17,18 @@ http://localhost:5173/?version=quest-map
 
 `?version=11` is also supported.
 
+Open the Final integrated prototype at:
+
+```text
+http://localhost:5173/?version=final
+```
+
+## Final: Integrated Prototype
+
+The Final prototype is an independent, mobile-first flow that learns from profile assumptions, selected and skipped candidates, actual actions, and short satisfaction feedback. It presents three differently framed options without treating the highest efficiency score as the only correct answer.
+
+Its state is stored separately in `tokyo-life-roi-final-state-v1`. Use `デモを試す` to load a family profile with prior choices and see how learned preferences change recommendation reasons. See [docs/prototypes/12-final.md](docs/prototypes/12-final.md) for the Japanese specification.
+
 ## Version 11: ROI Quest Map
 
 V11 combines a Leaflet/OpenStreetMap map, local Tokyo spot data, quest cards, a demo location fallback, and a check-in flow. The app is a mock: operating hours, costs, crowding, routes, and reward values are demo data.
