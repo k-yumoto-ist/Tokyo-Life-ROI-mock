@@ -261,7 +261,13 @@ export function readFinalState(): FinalState {
     const raw = window.localStorage.getItem(finalStateStorageKey) ?? window.localStorage.getItem(legacyFinalStateStorageKey);
     if (!raw) return initialFinalState;
     const parsed = JSON.parse(raw) as Partial<FinalState>;
-    return { ...initialFinalState, ...parsed, profile: { ...defaultFinalProfile, ...parsed.profile }, history: Array.isArray(parsed.history) ? parsed.history.map(migrateRecord) : [] };
+    return {
+      ...initialFinalState,
+      ...parsed,
+      profile: { ...defaultFinalProfile, ...parsed.profile },
+      history: Array.isArray(parsed.history) ? parsed.history.map(migrateRecord) : [],
+      profileOnboardingComplete: typeof parsed.profileOnboardingComplete === "boolean" ? parsed.profileOnboardingComplete : true,
+    };
   } catch { return initialFinalState; }
 }
 
@@ -270,7 +276,7 @@ export function saveFinalState(state: FinalState) {
 }
 
 export function createDemoFinalState(): FinalState {
-  return { profile: defaultFinalProfile, history: demoFinalHistory, lastPrompt: "子どもと2時間、暑さを避けて過ごしたい", lastPriorities: ["low-fatigue", "children"], demoEnabled: true, hasSeenConceptIntro: false };
+  return { profile: defaultFinalProfile, history: demoFinalHistory, lastPrompt: "子どもと2時間、暑さを避けて過ごしたい", lastPriorities: ["low-fatigue", "children"], demoEnabled: true, hasSeenConceptIntro: false, profileOnboardingComplete: true };
 }
 
 export function resetFinalState() {

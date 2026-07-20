@@ -5,19 +5,47 @@ export type FinalBurden = "easy" | "balanced" | "tired";
 export type FinalRevisitIntent = "yes" | "maybe" | "no";
 export type FinalCandidateRole = "best-fit" | "easy" | "special";
 export type FinalValueKey = "time" | "cost" | "crowd" | "fatigue" | "satisfaction" | "family" | "weather" | "novelty" | "publicValue" | "accessibility";
+export type FinalProfileSection = "basic" | "mobility" | "money" | "interests" | "details";
+export type FinalIncomeBand = "under-300" | "300-500" | "500-700" | "700-1000" | "over-1000" | "private";
 
 export type FinalProfile = {
   household: "solo" | "partner" | "family";
+  hasChildren: boolean;
   childAges: number[];
+  homeArea: string;
+  workArea: string;
+  frequentStation: string;
   transportModes: string[];
   hourlyValue: number;
   hourlyValueMode: "auto" | "manual";
+  incomeBand: FinalIncomeBand;
+  costSensitivity: "saving" | "balanced" | "experience";
+  waitTolerance: "low" | "medium" | "high";
   dislikesCrowds: boolean;
+  crowdPreference: "avoid" | "neutral" | "shorter-is-ok";
+  transferPreference: "fewer" | "neutral";
   walkingTolerance: "low" | "medium" | "high";
+  walkingMinutes: 5 | 15 | 30 | 60;
   noveltyInterest: number;
   heatTolerance: "low" | "medium" | "high";
   accessibilityNeeded: boolean;
   interests: string[];
+  valuePriorities: string[];
+  actionStyles: string[];
+  stroller: boolean;
+  elderlyCompanion: boolean;
+  hasPets: boolean;
+  oftenCarriesLuggage: boolean;
+  avoidStairs: boolean;
+  reduceWalkingInRain: boolean;
+  reduceWalkingInHeat: boolean;
+  reduceWalkingInCold: boolean;
+  preferSeatedTravel: boolean;
+  reservationResistance: boolean;
+  flexibleSchedule: boolean;
+  preferFreeFacilities: boolean;
+  payForComfort: boolean;
+  completedSections: FinalProfileSection[];
 };
 
 export type FinalTodayContext = {
@@ -80,6 +108,7 @@ export type FinalState = {
   lastPriorities: FinalPriority[];
   demoEnabled: boolean;
   hasSeenConceptIntro: boolean;
+  profileOnboardingComplete: boolean;
 };
 
 export const finalStateStorageKey = "tokyo-life-roi-final-state-v2";
@@ -113,16 +142,42 @@ export const finalSuggestionPrompts = [
 
 export const defaultFinalProfile: FinalProfile = {
   household: "family",
+  hasChildren: true,
   childAges: [6],
+  homeArea: "船橋エリア",
+  workArea: "東京エリア",
+  frequentStation: "東京駅",
   transportModes: ["電車", "徒歩"],
   hourlyValue: 3200,
   hourlyValueMode: "auto",
+  incomeBand: "500-700",
+  costSensitivity: "balanced",
+  waitTolerance: "low",
   dislikesCrowds: true,
+  crowdPreference: "avoid",
+  transferPreference: "fewer",
   walkingTolerance: "low",
+  walkingMinutes: 15,
   noveltyInterest: 64,
   heatTolerance: "low",
   accessibilityNeeded: false,
-  interests: ["学び", "子ども", "公共施設"],
+  interests: ["学び", "子ども", "公共施設", "自然", "文化"],
+  valuePriorities: ["家族との過ごしやすさ", "満足感", "時間"],
+  actionStyles: [],
+  stroller: false,
+  elderlyCompanion: false,
+  hasPets: false,
+  oftenCarriesLuggage: false,
+  avoidStairs: false,
+  reduceWalkingInRain: true,
+  reduceWalkingInHeat: true,
+  reduceWalkingInCold: false,
+  preferSeatedTravel: false,
+  reservationResistance: false,
+  flexibleSchedule: true,
+  preferFreeFacilities: false,
+  payForComfort: true,
+  completedSections: ["basic", "mobility", "money"],
 };
 
 export const demoFinalHistory: FinalChoiceRecord[] = [
@@ -185,6 +240,7 @@ export const initialFinalState: FinalState = {
   lastPriorities: [],
   demoEnabled: false,
   hasSeenConceptIntro: false,
+  profileOnboardingComplete: false,
 };
 
 export const finalCandidates: FinalCandidate[] = [

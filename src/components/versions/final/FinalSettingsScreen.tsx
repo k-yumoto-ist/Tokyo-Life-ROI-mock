@@ -1,45 +1,60 @@
-import { ArrowLeft, Check, Clock3, RotateCcw, Save, UsersRound } from "lucide-react";
+import { Accessibility, ArrowLeft, BrainCircuit, CheckCircle2, ChevronRight, Heart, RotateCcw, TrainFront, UserRound, WalletCards } from "lucide-react";
 import { useState } from "react";
-import type { FinalProfile } from "../../../data/finalMockData";
+import type { FinalChoiceRecord, FinalProfile, FinalProfileSection } from "../../../data/finalMockData";
+import { FinalLearnedTrendsScreen } from "./FinalLearnedTrendsScreen";
+import { FinalProfileCategoryEditor } from "./FinalProfileCategoryEditor";
 
-type Props = { profile: FinalProfile; onSave: (profile: FinalProfile) => void; onBack: () => void; onReset: () => void };
+type Props = { profile: FinalProfile; history: FinalChoiceRecord[]; initialSection?: FinalProfileSection; onSave: (profile: FinalProfile) => void; onBack: () => void; onReset: () => void };
+type SettingsView = "top" | "learned" | FinalProfileSection;
 
-export function FinalSettingsScreen({ profile, onSave, onBack, onReset }: Props) {
+export function FinalSettingsScreen({ profile, history, initialSection, onSave, onBack, onReset }: Props) {
   const [draft, setDraft] = useState(profile);
-  const [timeOpen, setTimeOpen] = useState(false);
-  const set = <K extends keyof FinalProfile>(key: K, value: FinalProfile[K]) => setDraft((current) => ({ ...current, [key]: value }));
-  const toggleInterest = (interest: string) => set("interests", draft.interests.includes(interest) ? draft.interests.filter((item) => item !== interest) : [...draft.interests, interest]);
+  const [view, setView] = useState<SettingsView>(initialSection ?? "top");
+  const completion = Math.min(100, 20 + (draft.completedSections.includes("basic") ? 15 : 0) + (draft.completedSections.includes("mobility") ? 15 : 0) + (draft.completedSections.includes("money") ? 15 : 0) + (draft.completedSections.includes("interests") ? 20 : 0) + (draft.completedSections.includes("details") ? 15 : 0));
+  const saveSection = (next: FinalProfile) => { setDraft(next); onSave(next); setView("top"); };
+
+  if (view === "learned") return <FinalLearnedTrendsScreen history={history} onBack={() => setView("top")} />;
+  if (view !== "top") return <FinalProfileCategoryEditor section={view} profile={draft} onBack={() => setView("top")} onSave={saveSection} />;
+
+  const cards: Array<{ id: FinalProfileSection; icon: typeof UserRound; title: string; lines: string[]; extra?: string }> = [
+    { id: "basic", icon: UserRound, title: "基本プロフィール", lines: [draft.household === "family" ? "家族・子どもあり" : draft.household === "partner" ? "二人暮らし" : "ひとり暮らし", `${draft.homeArea}・${draft.frequentStation}`] },
+    { id: "mobility", icon: TrainFront, title: "移動と身体", lines: [draft.transportModes.join("・"), `徒歩${draft.walkingMinutes}分程度・混雑${draft.dislikesCrowds ? "回避" : "許容"}`] },
+    { id: "money", icon: WalletCards, title: "時間とお金", lines: [draft.costSensitivity === "balanced" ? "費用はバランス重視" : draft.costSensitivity === "saving" ? "費用を抑えたい" : "体験を優先", "待ち時間はなるべく避けたい"], extra: `時間価値 ${draft.hourlyValue.toLocaleString("ja-JP")}円／時間` },
+    { id: "interests", icon: Heart, title: "興味と価値観", lines: [draft.interests.slice(0, 3).join("・"), draft.valuePriorities.slice(0, 2).join("・") || "大切にしたいことを追加"] },
+    { id: "details", icon: Accessibility, title: "詳細な暮らし", lines: ["ベビーカー・高齢者との移動", "荷物・ペット・バリアフリー"] },
+  ];
+
   return (
-    <main className="final-page final-settings-page">
-      <button className="final-back-link" onClick={onBack}><ArrowLeft size={18} />わたしの傾向に戻る</button>
-      <section className="final-section-heading"><span>PROFILE</span><h1>個人設定</h1><p>最初の提案をつくるための仮説です。行動と振り返りで少しずつ更新されます。</p></section>
-      <section className="final-settings-section">
-        <div className="final-settings-title"><UsersRound size={20} /><div><h2>暮らしと移動</h2><p>家族の負担や移動方法に反映します</p></div></div>
-        <label>暮らし方</label>
-        <div className="final-segmented-row">
-          {([['solo','ひとり'],['partner','二人'],['family','家族']] as const).map(([value, label]) => <button key={value} className={draft.household === value ? "is-active" : ""} onClick={() => set("household", value)}>{draft.household === value && <Check size={14} />}{label}</button>)}
-        </div>
-        <label>混雑</label>
-        <button className={`final-setting-toggle ${draft.dislikesCrowds ? "is-active" : ""}`} aria-pressed={draft.dislikesCrowds} onClick={() => set("dislikesCrowds", !draft.dislikesCrowds)}><span><strong>混雑をできれば避ける</strong><small>待ち時間と疲労をやや重く評価</small></span><i /></button>
-        <label>歩く量</label>
-        <div className="final-segmented-row">
-          {([['low','少なめ'],['medium','普通'],['high','歩ける']] as const).map(([value, label]) => <button key={value} className={draft.walkingTolerance === value ? "is-active" : ""} onClick={() => set("walkingTolerance", value)}>{label}</button>)}
-        </div>
+    <main className="final-page final-settings-page final-settings-top">
+      <button type="button" className="final-back-link" onClick={onBack}><ArrowLeft size={18} /> わたしの傾向に戻る</button>
+      <section className="final-section-heading final-settings-heading">
+        <span>PROFILE</span>
+        <h1>個人設定</h1>
+        <p>入力した内容と行動の振り返りから、あなたへの提案を少しずつ更新します。</p>
       </section>
-      <section className="final-settings-section">
-        <button className="final-settings-accordion" onClick={() => setTimeOpen((open) => !open)} aria-expanded={timeOpen}>
-          <Clock3 size={20} /><span><small>あなたの時間価値</small><strong>{draft.hourlyValue.toLocaleString("ja-JP")}円 / 時間</strong></span><b>{timeOpen ? "閉じる" : "調整"}</b>
+      <section className="final-profile-completion" aria-label={`プロフィール完成度 ${completion}%`}>
+        <div><span>プロフィール完成度</span><strong>{completion}%</strong></div>
+        <div className="final-profile-progress"><i style={{ width: `${completion}%` }} /></div>
+        <p>詳しく設定すると、提案の理由がさらにあなた向けになります。</p>
+      </section>
+      <div className="final-settings-card-list">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          const isComplete = draft.completedSections.includes(card.id);
+          return <button type="button" key={card.id} className="final-settings-card" onClick={() => setView(card.id)}>
+            <span className="final-settings-card-icon"><Icon size={20} /></span>
+            <span className="final-settings-card-copy"><span><b>{card.title}</b><em className={isComplete ? "is-complete" : ""}>{isComplete ? <><CheckCircle2 size={12} />設定済み</> : card.id === "details" ? "未設定" : "項目を追加"}</em></span>{card.extra && <small className="final-settings-card-extra">{card.extra}</small>}<small>{card.lines.join(" / ")}</small></span>
+            <ChevronRight size={18} />
+          </button>;
+        })}
+        <button type="button" className="final-settings-card is-learned" onClick={() => setView("learned")}>
+          <span className="final-settings-card-icon"><BrainCircuit size={20} /></span>
+          <span className="final-settings-card-copy"><span><b>学習した傾向</b><em className="is-learned">新しい発見あり</em></span><small>選択と振り返りから更新されます</small></span>
+          <ChevronRight size={18} />
         </button>
-        {timeOpen && <div className="final-time-editor"><p>{draft.hourlyValueMode === "auto" ? "年収帯などからの推定値を使用中です。" : "あなたが調整した値を使用中です。"} 感覚に合わせて500円単位で変更できます。</p><div><button onClick={() => setDraft((current) => ({ ...current, hourlyValue: Math.max(500, current.hourlyValue - 500), hourlyValueMode: "manual" }))} aria-label="時間価値を500円下げる">−</button><strong>{draft.hourlyValue.toLocaleString("ja-JP")}円</strong><button onClick={() => setDraft((current) => ({ ...current, hourlyValue: current.hourlyValue + 500, hourlyValueMode: "manual" }))} aria-label="時間価値を500円上げる">＋</button></div><button className="final-text-button" onClick={() => setDraft((current) => ({ ...current, hourlyValue: 3200, hourlyValueMode: "auto" }))}><RotateCcw size={14} />推定値に戻す</button></div>}
-      </section>
-      <section className="final-settings-section">
-        <h2>関心のあること</h2>
-        <div className="final-feedback-grid">
-          {["学び", "子ども", "公共施設", "自然", "文化", "健康"].map((item) => <button key={item} className={draft.interests.includes(item) ? "is-active" : ""} aria-pressed={draft.interests.includes(item)} onClick={() => toggleInterest(item)}>{draft.interests.includes(item) && <Check size={14} />}{item}</button>)}
-        </div>
-      </section>
-      <button className="final-primary-button" onClick={() => onSave(draft)}><Save size={17} />設定を保存</button>
-      <button className="final-text-button final-reset-button" onClick={onReset}><RotateCcw size={15} />統合版のデモ状態を初期化</button>
+      </div>
+      <div className="final-settings-legend"><span><i className="is-setting" />あなたが設定したこと</span><span><i className="is-learned" />行動から学習したこと</span></div>
+      <button type="button" className="final-text-button final-reset-button" onClick={onReset}><RotateCcw size={15} />統合版のデモ状態を初期化</button>
     </main>
   );
 }
