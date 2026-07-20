@@ -27,7 +27,9 @@ http://localhost:5173/?version=final
 
 The Final prototype is an independent, mobile-first flow that learns from profile assumptions, selected and skipped candidates, actual actions, and short satisfaction feedback. It presents three differently framed options without treating the highest efficiency score as the only correct answer.
 
-Its state is stored separately in `tokyo-life-roi-final-state-v1`. Use `デモを試す` to load a family profile with prior choices and see how learned preferences change recommendation reasons. See [docs/prototypes/12-final.md](docs/prototypes/12-final.md) for the Japanese specification.
+My QOL and My ROI are stored and learned separately. My QOL reflects fulfillment and life quality; My ROI evaluates the value received against time, cost, crowding, and other burdens. Neither is an accumulated game point, and one is not treated as a prerequisite for the other.
+
+Its state is stored separately in `tokyo-life-roi-final-state-v2` and automatically migrates the previous Final state. Use `デモを試す` to load a family profile with prior choices and see how learned preferences change both predictions. See [docs/prototypes/12-final.md](docs/prototypes/12-final.md) for the Japanese specification.
 
 ## Version 11: ROI Quest Map
 

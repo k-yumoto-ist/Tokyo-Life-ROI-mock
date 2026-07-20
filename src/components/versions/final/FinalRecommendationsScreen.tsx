@@ -10,14 +10,14 @@ type FinalRecommendationsScreenProps = {
   onChoose: (recommendation: FinalRecommendation) => void;
 };
 
-const shortRoleLabels = ["あなた向け", "発見", "今日の条件"];
+const shortRoleLabels = ["バランス", "QOL", "ROI"];
 
 export function FinalRecommendationsScreen({ recommendations, contextSummary, onDetails, onChoose }: FinalRecommendationsScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [compareOpen, setCompareOpen] = useState(false);
   return (
     <main className="final-page final-results-page">
-      <section className="final-results-heading"><span>2 / 2</span><h1>今のあなたに合う<br />3つを見つけました</h1><p>{contextSummary}</p></section>
+      <section className="final-results-heading"><span>2 / 2</span><h1>今日は、どの良さを<br />選びますか？</h1><p>{contextSummary}・順位ではなく異なる3つの価値です</p></section>
       <div className="final-plan-tabs" role="tablist" aria-label="候補を切り替える">
         {recommendations.map((item, index) => <button key={item.candidate.id} role="tab" aria-selected={activeIndex === index} className={activeIndex === index ? "is-active" : ""} onClick={() => setActiveIndex(index)}><span>{index + 1}</span>{shortRoleLabels[index]}</button>)}
       </div>
@@ -40,8 +40,9 @@ export function FinalRecommendationsScreen({ recommendations, contextSummary, on
             <span>移動</span>{recommendations.map((item) => <b key={item.candidate.id}>{item.candidate.travelMinutes}分</b>)}
             <span>費用</span>{recommendations.map((item) => <b key={item.candidate.id}>{item.candidate.cost === 0 ? "無料" : `${item.candidate.cost.toLocaleString("ja-JP")}円`}</b>)}
             <span>混雑</span>{recommendations.map((item) => <b key={item.candidate.id}>{item.candidate.crowdLabel}</b>)}
-            <span>親子</span>{recommendations.map((item) => <b key={item.candidate.id}>{item.candidate.scores.family >= 90 ? "とても良い" : item.candidate.scores.family >= 75 ? "良い" : "ふつう"}</b>)}
-            <span>発見</span>{recommendations.map((item) => <b key={item.candidate.id}>{item.candidate.scores.novelty >= 90 ? "大きい" : item.candidate.scores.novelty >= 70 ? "あり" : "少なめ"}</b>)}
+            <span>My QOL</span>{recommendations.map((item) => <b className="is-qol" key={item.candidate.id}>{item.qolLabel}</b>)}
+            <span>My ROI</span>{recommendations.map((item) => <b className="is-roi" key={item.candidate.id}>{item.roiLabel}</b>)}
+            <span>特徴</span>{recommendations.map((item) => <b key={item.candidate.id}>{item.role === "balanced" ? "両方" : item.role === "qol-focus" ? "充実" : "効率"}</b>)}
           </div>
           <p>順位ではなく、今日どの良さを選ぶかの比較です。</p>
           <button className="final-primary-button" onClick={() => { setCompareOpen(false); onChoose(recommendations[activeIndex]); }}>{shortRoleLabels[activeIndex]}の案を選ぶ</button>

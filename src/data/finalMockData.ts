@@ -1,7 +1,9 @@
 export type FinalPriority = "low-fatigue" | "time" | "saving" | "children" | "novelty" | "quiet" | "slow";
 export type FinalActionStatus = "selected" | "visited" | "skipped" | "changed";
 export type FinalSatisfaction = "great" | "good" | "low";
-export type FinalCandidateRole = "best-fit" | "discovery" | "today-only";
+export type FinalBurden = "easy" | "balanced" | "tired";
+export type FinalRevisitIntent = "yes" | "maybe" | "no";
+export type FinalCandidateRole = "balanced" | "qol-focus" | "roi-focus";
 export type FinalValueKey = "time" | "cost" | "crowd" | "fatigue" | "satisfaction" | "family" | "weather" | "novelty" | "publicValue" | "accessibility";
 
 export type FinalProfile = {
@@ -58,8 +60,16 @@ export type FinalChoiceRecord = {
   comparedCandidateIds: string[];
   actionStatus: FinalActionStatus;
   satisfaction?: FinalSatisfaction;
+  burden?: FinalBurden;
+  revisitIntent?: FinalRevisitIntent;
+  predictedQol?: number;
+  predictedRoi?: number;
+  actualQol?: number;
+  actualRoi?: number;
   feedbackReasons: string[];
   learnedInsight?: string;
+  qolInsight?: string;
+  roiInsight?: string;
   happenedAt: string;
 };
 
@@ -71,7 +81,8 @@ export type FinalState = {
   demoEnabled: boolean;
 };
 
-export const finalStateStorageKey = "tokyo-life-roi-final-state-v1";
+export const finalStateStorageKey = "tokyo-life-roi-final-state-v2";
+export const legacyFinalStateStorageKey = "tokyo-life-roi-final-state-v1";
 
 export const finalPriorityLabels: Record<FinalPriority, string> = {
   "low-fatigue": "疲れたくない",
@@ -84,14 +95,12 @@ export const finalPriorityLabels: Record<FinalPriority, string> = {
 };
 
 export const finalFeedbackOptions = [
-  "移動が楽だった",
-  "思ったより混んでいた",
-  "子どもが楽しんでいた",
-  "費用に納得できた",
-  "疲れた",
+  "予想より楽しかった",
+  "家族の満足度が高かった",
   "新しい発見があった",
-  "また行きたい",
-  "天候の影響が少なかった",
+  "思ったより混んでいた",
+  "思ったより時間がかかった",
+  "思ったよりお金がかかった",
 ] as const;
 
 export const finalSuggestionPrompts = [
@@ -123,8 +132,16 @@ export const demoFinalHistory: FinalChoiceRecord[] = [
     comparedCandidateIds: ["central-library", "kids-facility", "shinjuku-park"],
     actionStatus: "visited",
     satisfaction: "great",
-    feedbackReasons: ["移動が楽だった", "子どもが楽しんでいた", "天候の影響が少なかった"],
+    burden: "easy",
+    revisitIntent: "yes",
+    predictedQol: 78,
+    predictedRoi: 82,
+    actualQol: 86,
+    actualRoi: 80,
+    feedbackReasons: ["予想より楽しかった", "家族の満足度が高かった"],
     learnedInsight: "屋内で移動が楽な場所の満足度が高い傾向です",
+    qolInsight: "家族で落ち着いて過ごせる時間が、充実感につながりました",
+    roiInsight: "移動負担が少なく、予測に近いバランスでした",
     happenedAt: "2026-07-13T05:20:00.000Z",
   },
   {
@@ -134,8 +151,16 @@ export const demoFinalHistory: FinalChoiceRecord[] = [
     comparedCandidateIds: ["shinjuku-park", "tokyo-toy-museum", "kids-facility"],
     actionStatus: "visited",
     satisfaction: "good",
-    feedbackReasons: ["移動が楽だった", "疲れた"],
+    burden: "tired",
+    revisitIntent: "maybe",
+    predictedQol: 76,
+    predictedRoi: 88,
+    actualQol: 72,
+    actualRoi: 79,
+    feedbackReasons: ["思ったより時間がかかった"],
     learnedInsight: "近さは好相性ですが、暑い日は屋内の方が合いそうです",
+    qolInsight: "近さだけでなく、暑さを避けて休めることも大切そうです",
+    roiInsight: "無料でも疲労が大きいと、実績ROIは下がる傾向です",
     happenedAt: "2026-07-06T04:10:00.000Z",
   },
   {
@@ -144,6 +169,8 @@ export const demoFinalHistory: FinalChoiceRecord[] = [
     selectedCandidateId: "edo-tokyo-open-air",
     comparedCandidateIds: ["edo-tokyo-open-air", "water-science", "central-library"],
     actionStatus: "skipped",
+    predictedQol: 84,
+    predictedRoi: 61,
     feedbackReasons: [],
     learnedInsight: "長い移動のプランは選んでも行動につながりにくい傾向です",
     happenedAt: "2026-06-29T03:30:00.000Z",

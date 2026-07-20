@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { VersionKey } from "../../../config/versions";
-import { type FinalActionStatus, type FinalChoiceRecord, type FinalPriority, type FinalSatisfaction, type FinalState, type FinalTodayContext } from "../../../data/finalMockData";
-import { createChoiceRecord, createDemoFinalState, readFinalState, recommendFinalCandidates, resetFinalState, saveFinalState, type FinalRecommendation } from "../../../lib/finalRecommendation";
+import { type FinalActionStatus, type FinalBurden, type FinalChoiceRecord, type FinalPriority, type FinalRevisitIntent, type FinalSatisfaction, type FinalState, type FinalTodayContext } from "../../../data/finalMockData";
+import { createChoiceRecord, createDemoFinalState, getFinalDashboardSummary, readFinalState, recommendFinalCandidates, resetFinalState, saveFinalState, type FinalRecommendation } from "../../../lib/finalRecommendation";
 import { FinalBottomNav, type FinalTab } from "./FinalBottomNav";
 import { FinalHeader } from "./FinalHeader";
 import { FinalHistoryScreen } from "./FinalHistoryScreen";
@@ -67,9 +67,9 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
     setState(next);
     setLastRecord(record);
   }
-  function recordAction(status: FinalActionStatus, satisfaction?: FinalSatisfaction, reasons: string[] = []) {
+  function recordAction(status: FinalActionStatus, feedback?: { satisfaction: FinalSatisfaction; burden: FinalBurden; revisitIntent: FinalRevisitIntent; reasons: string[] }) {
     if (!selected) return;
-    const record = createChoiceRecord({ candidateId: selected.candidate.id, comparedIds: recommendations.map((item) => item.candidate.id), context, status, satisfaction, reasons });
+    const record = createChoiceRecord({ candidateId: selected.candidate.id, comparedIds: recommendations.map((item) => item.candidate.id), context, status, predictedQol: selected.predictedQol, predictedRoi: selected.predictedRoi, ...feedback });
     updateStateWithRecord(record);
     setFlow("learned");
   }
@@ -89,15 +89,16 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
 
   const navActive: FinalTab = flow === "history" ? "history" : flow === "roi" || flow === "settings" ? "roi" : "home";
   const summary = `${context.timeWindow}・予算${context.budget.toLocaleString("ja-JP")}円以内`;
+  const wellbeing = getFinalDashboardSummary(state.history);
   return (
     <div className="final-app">
       {flow !== "loading" && <FinalHeader currentVersion={currentVersion} onVersionChange={onVersionChange} onProfile={() => setFlow("settings")} onBack={flow === "priority" ? () => setFlow("home") : flow === "results" ? () => setFlow("priority") : undefined} />}
-      {flow === "home" && <FinalHomeScreen prompt={prompt} onPromptChange={setPrompt} historyCount={state.history.length} latestInsight={state.history[state.history.length - 1]?.learnedInsight} onNext={startPriorities} onDemo={startDemo} />}
+      {flow === "home" && <FinalHomeScreen prompt={prompt} onPromptChange={setPrompt} historyCount={state.history.length} latestInsight={state.history[state.history.length - 1]?.qolInsight} wellbeing={wellbeing} onNext={startPriorities} onDemo={startDemo} />}
       {flow === "priority" && <FinalPriorityScreen selected={priorities} summary={prompt} onToggle={(priority) => setPriorities((current) => current.includes(priority) ? current.filter((item) => item !== priority) : current.length < 3 ? [...current, priority] : current)} onSubmit={() => setFlow("loading")} />}
       {flow === "loading" && <FinalLoadingScreen />}
       {flow === "results" && <FinalRecommendationsScreen recommendations={recommendations} contextSummary={summary} onDetails={setDetail} onChoose={(item) => { setSelected(item); setFlow("selected"); }} />}
       {flow === "selected" && selected && <FinalSelectedScreen recommendation={selected} onBack={() => setFlow("results")} onVisited={() => setFlow("reflection")} onSkipped={() => recordAction("skipped")} onChanged={() => recordAction("changed")} onToast={setToast} />}
-      {flow === "reflection" && selected && <FinalReflectionScreen recommendation={selected} onSave={(satisfaction, reasons) => recordAction("visited", satisfaction, reasons)} />}
+      {flow === "reflection" && selected && <FinalReflectionScreen recommendation={selected} onSave={(feedback) => recordAction("visited", feedback)} />}
       {flow === "learned" && lastRecord && <FinalLearnedScreen record={lastRecord} cityPoint={selected?.candidate.cityPoint ?? 0} onMyRoi={() => setFlow("roi")} onHome={() => setFlow("home")} />}
       {flow === "history" && <FinalHistoryScreen history={state.history} />}
       {flow === "roi" && <FinalMyRoiScreen history={state.history} onSettings={() => setFlow("settings")} onHistory={() => setFlow("history")} />}

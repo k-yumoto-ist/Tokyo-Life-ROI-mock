@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, Coins, MapPin, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, Clock3, Coins, Gauge, Heart, MapPin, Sparkles, UsersRound } from "lucide-react";
 import type { FinalRecommendation } from "../../../lib/finalRecommendation";
 
 type FinalRecommendationCardProps = {
@@ -9,9 +9,9 @@ type FinalRecommendationCardProps = {
 };
 
 const roleLabels = {
-  "best-fit": "今日のあなた向け",
-  discovery: "少し意外な相性",
-  "today-only": "今日だから成立",
+  balanced: "今日のバランス",
+  "qol-focus": "QOL重視",
+  "roi-focus": "ROI重視",
 } as const;
 
 export function FinalRecommendationCard({ recommendation, active, onDetails, onChoose }: FinalRecommendationCardProps) {
@@ -30,7 +30,10 @@ export function FinalRecommendationCard({ recommendation, active, onDetails, onC
           <div><Clock3 size={17} /><strong>{candidate.travelMinutes}分</strong><span>移動</span></div>
           <div><Coins size={17} /><strong>{candidate.cost === 0 ? "無料" : `${candidate.cost.toLocaleString("ja-JP")}円`}</strong><span>費用</span></div>
           <div><UsersRound size={17} /><strong>{candidate.crowdLabel}</strong><span>混雑</span></div>
-          <div><Sparkles size={17} /><strong>{recommendation.affinity}</strong><span>今日の相性</span></div>
+        </div>
+        <div className="final-dual-impact" aria-label="My QOLとMy ROIの予測">
+          <div className="is-qol"><Heart size={17} /><span><small>My QOL</small><strong>{recommendation.qolLabel}</strong><em>{recommendation.qolReason}</em></span><b>{recommendation.predictedQol}</b></div>
+          <div className="is-roi"><Gauge size={17} /><span><small>My ROI</small><strong>{recommendation.roiLabel}</strong><em>{recommendation.roiReason}</em></span><b>{recommendation.predictedRoi}</b></div>
         </div>
         <p className="final-plan-copy">{candidate.shortCopy}</p>
         <div className="final-reason-line"><span>なぜ？</span><p>{recommendation.reason}</p></div>

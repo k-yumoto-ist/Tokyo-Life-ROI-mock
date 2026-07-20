@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Clock3, Map, MapPin, Navigation, Share2, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Gauge, Heart, Map, MapPin, Navigation, Share2, Sparkles } from "lucide-react";
 import type { FinalRecommendation } from "../../../lib/finalRecommendation";
 
 type Props = {
@@ -26,6 +26,10 @@ export function FinalSelectedScreen({ recommendation, onBack, onVisited, onSkipp
         <div><span>出発目安</span><strong>13:20</strong></div>
         <div><span>移動</span><strong>{candidate.travelMinutes}分</strong></div>
         <div><span>費用</span><strong>{candidate.cost === 0 ? "無料" : `${candidate.cost.toLocaleString("ja-JP")}円`}</strong></div>
+      </section>
+      <section className="final-dual-impact" aria-label="選択したプランの予測">
+        <div className="is-qol"><Heart size={17} /><span><small>予測My QOL</small><strong>{recommendation.qolLabel}</strong><em>{recommendation.qolReason}</em></span><b>{recommendation.predictedQol}</b></div>
+        <div className="is-roi"><Gauge size={17} /><span><small>予測My ROI</small><strong>{recommendation.roiLabel}</strong><em>{recommendation.roiReason}</em></span><b>{recommendation.predictedRoi}</b></div>
       </section>
 
       <section className="final-timeline">
