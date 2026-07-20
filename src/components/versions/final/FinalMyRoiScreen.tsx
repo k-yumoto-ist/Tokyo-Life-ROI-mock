@@ -12,34 +12,45 @@ export function FinalMyRoiScreen({ history, onSettings, onHistory }: Props) {
   const familyWins = visited.filter((item) => item.feedbackReasons.includes("家族の満足度が高かった")).length;
   const tired = visited.filter((item) => item.burden === "tired").length;
   const latest = history[history.length - 1];
+  const restLevel = tired > 0 ? 46 : 72;
+  const discoveryLevel = discoveries > 0 ? 76 : 52;
+  const familyLevel = familyWins > 0 ? 88 : 64;
   return (
     <main className="final-page final-roi-page">
-      <section className="final-section-heading"><span>YOUR BALANCE</span><h1>My QOL と My ROI</h1><p>暮らしの充実と、選択の効率を別々に振り返ります。</p></section>
+      <section className="final-section-heading"><span>MY LIFE, RECENTLY</span><h1>わたしの傾向</h1><p>最近の暮らしと、選び方の変化を振り返ります。</p></section>
       <section className="final-learning-profile">
         <div className="final-learning-ring"><Brain size={24} /><span>{history.length}</span><small>記録</small></div>
         <div><small>パーソナライズ</small><h2>{stage.label}</h2><p>{stage.note}</p></div>
       </section>
 
-      <section className="final-profile-axis is-qol">
-        <header><div><Heart size={20} /><span><small>MY QOL</small><h2>暮らしの充実</h2></span></div><strong>{summary.averageQol}</strong></header>
+      <section className="final-qol-dashboard" aria-labelledby="final-qol-dashboard-title">
+        <header><div><Heart size={21} /><span><small>直近7日間</small><h2 id="final-qol-dashboard-title">最近のMy QOL</h2></span></div><strong>{summary.averageQol}</strong></header>
         <p>{summary.qolHeadline}</p><small>{summary.qolNeed}</small>
-        <div className="final-axis-mini-metrics"><span><b>{familyWins}</b>家族の満足</span><span><b>{discoveries}</b>新しい発見</span><span><b>{Math.max(0, visited.length - tired)}</b>余裕のある日</span></div>
-        <em><Sparkles size={13} />{latest?.qolInsight ?? "満足につながる条件を学習中です"}</em>
+        <div className="final-qol-dimensions">
+          <span><label>家族時間</label><i><b style={{ width: `${familyLevel}%` }} /></i><em>高い</em></span>
+          <span><label>心の余裕</label><i><b style={{ width: "72%" }} /></i><em>安定</em></span>
+          <span><label>休息</label><i><b style={{ width: `${restLevel}%` }} /></i><em>{tired ? "やや不足" : "安定"}</em></span>
+          <span><label>新しい体験</label><i><b style={{ width: `${discoveryLevel}%` }} /></i><em>{discoveries ? "充実" : "普通"}</em></span>
+        </div>
+        <em className="final-qol-summary-note"><Sparkles size={13} />{latest?.qolInsight ?? "満足につながる条件を学習中です"}</em>
       </section>
 
-      <section className="final-profile-axis is-roi">
-        <header><div><Gauge size={20} /><span><small>MY ROI</small><h2>価値と負担のバランス</h2></span></div><strong>{summary.averageRoi}</strong></header>
-        <p>{summary.roiHeadline}</p><small>時間・費用・混雑・疲労を含む最近の平均</small>
-        <div className="final-axis-mini-metrics"><span><b>42分</b>移動を短縮</span><span><b>{tired}</b>負担が大きい日</span><span><b>±6</b>予測との差</span></div>
-        <em><TimerReset size={13} />{latest?.roiInsight ?? "負担と得られた価値のバランスを学習中です"}</em>
+      <section className="final-roi-pattern-card" aria-labelledby="final-roi-pattern-title">
+        <header><Gauge size={19} /><span><small>最近の選択傾向</small><h2 id="final-roi-pattern-title">平均My ROI {summary.averageRoi}</h2></span></header>
+        <p>{summary.roiHeadline}</p>
+        <ul>
+          <li>移動負担が少ない日は、満足度も高い傾向です</li>
+          {tired > 0 && <li>疲労が大きい日は、予想より評価が下がっています</li>}
+          <li>家族が楽しめる行動は、My ROIも高くなる傾向があります</li>
+        </ul>
+        <small><TimerReset size={13} />{latest?.roiInsight ?? "時間・費用・疲れと得られた価値を学習中です"}</small>
       </section>
 
-      <section className="final-quadrant-explainer">
-        <h2>どの選択も、あり得ます</h2>
-        <div><span>高QOL<br />低ROI</span><span>高QOL<br />高ROI</span><span>低QOL<br />低ROI</span><span>低QOL<br />高ROI</span><i /></div>
-        <p>遠回りや少しの贅沢が、充実につながる日もあります。</p>
+      <section className="final-qol-roi-relationship">
+        <Gauge size={17} /><ArrowRight size={15} /><Heart size={17} />
+        <p><strong>My QOLは暮らしの現在地。</strong><span>My ROIは、次の選択を考えるものさしです。</span></p>
       </section>
-      <button className="final-list-link" onClick={onHistory}><Compass size={19} /><span><strong>選択ごとの2軸を見る</strong><small>{history.length}件のQOL・ROI履歴</small></span><ArrowRight size={18} /></button>
+      <button className="final-list-link" onClick={onHistory}><Compass size={19} /><span><strong>これまでの記録を見る</strong><small>{history.length}件の選択と振り返り</small></span><ArrowRight size={18} /></button>
       <button className="final-list-link" onClick={onSettings}><Settings2 size={19} /><span><strong>個人設定</strong><small>時間価値や家族構成を調整</small></span><ChevronRight size={18} /></button>
     </main>
   );

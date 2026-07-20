@@ -9,8 +9,8 @@ type FinalBottomNavProps = {
 
 const finalTabs = [
   { id: "home", label: "ホーム", Icon: Home },
-  { id: "history", label: "履歴", Icon: History },
-  { id: "roi", label: "QOL / ROI", Icon: LineChart },
+  { id: "history", label: "記録", Icon: History },
+  { id: "roi", label: "わたしの傾向", Icon: LineChart },
 ] as const;
 
 export function FinalBottomNav({ active, onChange }: FinalBottomNavProps) {

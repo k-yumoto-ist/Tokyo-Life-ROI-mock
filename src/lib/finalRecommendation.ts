@@ -25,10 +25,9 @@ export type FinalRecommendation = {
   affinity: number;
   predictedQol: number;
   predictedRoi: number;
-  qolLabel: string;
   roiLabel: string;
+  qolEffects: { label: string; direction: "up" | "steady" | "down" }[];
   reason: string;
-  qolReason: string;
   roiReason: string;
   learnedReason?: string;
 };
@@ -128,38 +127,50 @@ function learnedReason(history: FinalChoiceRecord[]) {
   return "これまでの選択と振り返りを反映しています";
 }
 
+function qolEffects(candidate: FinalCandidate) {
+  const effects = [
+    { label: "家族時間", score: candidate.scores.family },
+    { label: "新しい体験", score: candidate.scores.novelty },
+    { label: "心の余裕", score: Math.round((candidate.scores.fatigue + candidate.scores.crowd) / 2) },
+    { label: "休息", score: Math.round((candidate.scores.fatigue + candidate.scores.weather) / 2) },
+  ];
+  return effects.map(({ label, score }) => ({ label, direction: score >= 82 ? "up" as const : score >= 60 ? "steady" as const : "down" as const }));
+}
+
 function recommendationCopy(candidate: FinalCandidate, role: FinalCandidateRole) {
-  if (role === "qol-focus") return {
-    reason: "効率よりも、今日の充実感を大切にする案です",
-    qolReason: candidate.scores.novelty > 85 ? "新しい体験が、家族の思い出につながる" : "家族でゆっくり楽しめる",
-    roiReason: candidate.travelMinutes > 35 ? "移動は長めでも、得られる体験は大きい" : "少し費用を使って、満足を優先",
+  if (role === "easy") return {
+    reason: "移動が短く、今日の疲れを増やしにくい候補です",
+    roiReason: candidate.cost === 0 ? "近くて無料。負担を小さくできる" : "移動と費用を抑えやすい",
   };
-  if (role === "roi-focus") return {
-    reason: "時間と費用の負担を抑えやすい案です",
-    qolReason: candidate.scores.novelty < 55 ? "気軽だが、体験としてはいつも通り" : "無理なく楽しめる",
-    roiReason: candidate.cost === 0 ? "近くて無料。負担を最小限にできる" : "移動と費用のバランスが良い",
+  if (role === "special") return {
+    reason: "負担はありますが、今しか得にくい体験があります",
+    roiReason: "費用と混雑はある一方、思い出になる価値を含みます",
   };
   return {
-    reason: "効率と充実感の両方を、今日の条件で整えました",
-    qolReason: "親子の満足と心身の余裕を両立しやすい",
-    roiReason: "費用を抑えつつ、移動負担も小さい",
+    reason: "今日の条件と、これまで満足度が高かった要素が重なります",
+    roiReason: "家族の満足も価値に含め、時間・費用・疲れとのバランスが良好",
   };
 }
 
 function toRecommendation(item: ReturnType<typeof scoreCandidate>, role: FinalCandidateRole, history: FinalChoiceRecord[]): FinalRecommendation {
   const copy = recommendationCopy(item.candidate, role);
-  return { ...item, role, qolLabel: scoreLabel(item.predictedQol), roiLabel: scoreLabel(item.predictedRoi), ...copy, learnedReason: role === "balanced" ? learnedReason(history) : undefined };
+  return { ...item, role, roiLabel: scoreLabel(item.predictedRoi), qolEffects: qolEffects(item.candidate), ...copy, learnedReason: role === "best-fit" ? learnedReason(history) : undefined };
 }
 
 export function recommendFinalCandidates(context: FinalTodayContext, state: FinalState): FinalRecommendation[] {
   const scored = finalCandidates.map((candidate) => scoreCandidate(candidate, context, state.profile, state.history));
-  const balanced = [...scored].sort((left, right) => right.affinity - left.affinity)[0];
-  const qolFocus = [...scored].filter((item) => item.candidate.id !== balanced.candidate.id).sort((left, right) => right.predictedQol - left.predictedQol)[0];
-  const roiFocus = [...scored].filter((item) => item.candidate.id !== balanced.candidate.id && item.candidate.id !== qolFocus.candidate.id).sort((left, right) => right.predictedRoi - left.predictedRoi)[0];
+  const bestFit = [...scored].sort((left, right) => right.affinity - left.affinity)[0];
+  const easy = [...scored]
+    .filter((item) => item.candidate.id !== bestFit.candidate.id)
+    .sort((left, right) => (right.candidate.scores.time + right.candidate.scores.fatigue + right.candidate.scores.cost) - (left.candidate.scores.time + left.candidate.scores.fatigue + left.candidate.scores.cost))[0];
+  const specialPool = [...scored].filter((item) => item.candidate.id !== bestFit.candidate.id && item.candidate.id !== easy.candidate.id);
+  const higherBurdenExperiences = specialPool.filter((item) => item.candidate.cost >= 3000 || item.candidate.crowdLevel >= 4);
+  const special = (higherBurdenExperiences.length ? higherBurdenExperiences : specialPool)
+    .sort((left, right) => (right.candidate.scores.novelty + right.candidate.scores.satisfaction + right.candidate.scores.family) - (left.candidate.scores.novelty + left.candidate.scores.satisfaction + left.candidate.scores.family))[0];
   return [
-    toRecommendation(balanced, "balanced", state.history),
-    toRecommendation(qolFocus, "qol-focus", state.history),
-    toRecommendation(roiFocus, "roi-focus", state.history),
+    toRecommendation(bestFit, "best-fit", state.history),
+    toRecommendation(easy, "easy", state.history),
+    toRecommendation(special, "special", state.history),
   ];
 }
 
@@ -174,8 +185,8 @@ export function buildQolInsight(satisfaction?: FinalSatisfaction, revisitIntent?
   if (reasons.includes("家族の満足度が高かった")) return "家族が楽しめる時間が、QOLを高める傾向です";
   if (reasons.includes("新しい発見があった")) return "新しい体験が、暮らしの充実につながりました";
   if (reasons.includes("予想より楽しかった")) return "効率だけでは見えない楽しさがありました";
-  if (revisitIntent === "no" || satisfaction === "low") return "今回の体験は、次回のQOL予測を控えめにします";
-  return "今回の満足度を、次のMy QOL予測に反映します";
+  if (revisitIntent === "no" || satisfaction === "low") return "今回の体験を、最近のQOL傾向として控えめに反映します";
+  return "今回の満足度を、最近のMy QOLの振り返りに加えます";
 }
 
 export function buildRoiInsight(burden?: FinalBurden, reasons: string[] = []) {
@@ -231,6 +242,11 @@ export function getFinalDashboardSummary(history: FinalChoiceRecord[]) {
     qolHeadline: familyWins ? "家族時間が充実につながっています" : "満足につながる条件を学習中です",
     qolNeed: tired ? "休息は少し不足気味" : "心身の余裕は安定",
     roiHeadline: tired ? "疲労を含めるとROIが下がる傾向" : "時間と負担のバランスは良好",
+    qolSignals: [
+      { label: "家族時間", trend: familyWins ? "up" as const : "steady" as const },
+      { label: "心の余裕", trend: tired ? "down" as const : "steady" as const },
+      { label: "休息", trend: tired ? "down" as const : "steady" as const },
+    ],
   };
 }
 
@@ -254,7 +270,7 @@ export function saveFinalState(state: FinalState) {
 }
 
 export function createDemoFinalState(): FinalState {
-  return { profile: defaultFinalProfile, history: demoFinalHistory, lastPrompt: "日曜日の午後、6歳の子どもと2時間過ごしたい", lastPriorities: ["low-fatigue", "children"], demoEnabled: true };
+  return { profile: defaultFinalProfile, history: demoFinalHistory, lastPrompt: "子どもと2時間、暑さを避けて過ごしたい", lastPriorities: ["low-fatigue", "children"], demoEnabled: true, hasSeenConceptIntro: false };
 }
 
 export function resetFinalState() {

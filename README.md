@@ -27,7 +27,7 @@ http://localhost:5173/?version=final
 
 The Final prototype is an independent, mobile-first flow that learns from profile assumptions, selected and skipped candidates, actual actions, and short satisfaction feedback. It presents three differently framed options without treating the highest efficiency score as the only correct answer.
 
-My QOL and My ROI are stored and learned separately. My QOL reflects fulfillment and life quality; My ROI evaluates the value received against time, cost, crowding, and other burdens. Neither is an accumulated game point, and one is not treated as a prerequisite for the other.
+My QOL and My ROI have different roles and time scales. My QOL is the recent state of daily fulfillment, aggregated from multiple actions and feedback. My ROI is the personalized measure used to compare each choice, balancing satisfaction, family time, learning, and other value against time, cost, crowding, fatigue, and other burdens. Candidate cards show My ROI and the QOL dimensions likely to be supported; they do not show two competing scores.
 
 Its state is stored separately in `tokyo-life-roi-final-state-v2` and automatically migrates the previous Final state. Use `デモを試す` to load a family profile with prior choices and see how learned preferences change both predictions. See [docs/prototypes/12-final.md](docs/prototypes/12-final.md) for the Japanese specification.
 

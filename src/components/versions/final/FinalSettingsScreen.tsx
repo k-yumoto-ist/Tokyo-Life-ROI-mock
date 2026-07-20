@@ -11,7 +11,7 @@ export function FinalSettingsScreen({ profile, onSave, onBack, onReset }: Props)
   const toggleInterest = (interest: string) => set("interests", draft.interests.includes(interest) ? draft.interests.filter((item) => item !== interest) : [...draft.interests, interest]);
   return (
     <main className="final-page final-settings-page">
-      <button className="final-back-link" onClick={onBack}><ArrowLeft size={18} />My ROIに戻る</button>
+      <button className="final-back-link" onClick={onBack}><ArrowLeft size={18} />わたしの傾向に戻る</button>
       <section className="final-section-heading"><span>PROFILE</span><h1>個人設定</h1><p>最初の提案をつくるための仮説です。行動と振り返りで少しずつ更新されます。</p></section>
       <section className="final-settings-section">
         <div className="final-settings-title"><UsersRound size={20} /><div><h2>暮らしと移動</h2><p>家族の負担や移動方法に反映します</p></div></div>

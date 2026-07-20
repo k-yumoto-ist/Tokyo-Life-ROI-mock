@@ -57,7 +57,8 @@ export function FinalReflectionScreen({ recommendation, onSave }: Props) {
           {finalFeedbackOptions.map((reason) => <button key={reason} className={reasons.includes(reason) ? "is-active" : ""} aria-pressed={reasons.includes(reason)} onClick={() => toggle(reason)}>{reasons.includes(reason) && <Check size={14} />}{reason}</button>)}
         </div>
       </details>
-      <button className="final-primary-button final-sticky-cta" onClick={() => onSave({ satisfaction, burden, revisitIntent, reasons })}>2つの予測に反映する</button>
+      <button className="final-primary-button final-sticky-cta" onClick={() => onSave({ satisfaction, burden, revisitIntent, reasons })}>今日の体験を記録する</button>
+      <p className="final-reflection-help">My ROIの予測と、My QOLの振り返りに活かされます</p>
     </main>
   );
 }

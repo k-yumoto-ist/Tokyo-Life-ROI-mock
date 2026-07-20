@@ -3,7 +3,7 @@ export type FinalActionStatus = "selected" | "visited" | "skipped" | "changed";
 export type FinalSatisfaction = "great" | "good" | "low";
 export type FinalBurden = "easy" | "balanced" | "tired";
 export type FinalRevisitIntent = "yes" | "maybe" | "no";
-export type FinalCandidateRole = "balanced" | "qol-focus" | "roi-focus";
+export type FinalCandidateRole = "best-fit" | "easy" | "special";
 export type FinalValueKey = "time" | "cost" | "crowd" | "fatigue" | "satisfaction" | "family" | "weather" | "novelty" | "publicValue" | "accessibility";
 
 export type FinalProfile = {
@@ -79,6 +79,7 @@ export type FinalState = {
   lastPrompt: string;
   lastPriorities: FinalPriority[];
   demoEnabled: boolean;
+  hasSeenConceptIntro: boolean;
 };
 
 export const finalStateStorageKey = "tokyo-life-roi-final-state-v2";
@@ -183,6 +184,7 @@ export const initialFinalState: FinalState = {
   lastPrompt: "",
   lastPriorities: [],
   demoEnabled: false,
+  hasSeenConceptIntro: false,
 };
 
 export const finalCandidates: FinalCandidate[] = [

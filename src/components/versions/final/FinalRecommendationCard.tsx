@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, Coins, Gauge, Heart, MapPin, Sparkles, UsersRound } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Clock3, Coins, Gauge, Heart, MapPin, Minus, Sparkles, UsersRound } from "lucide-react";
 import type { FinalRecommendation } from "../../../lib/finalRecommendation";
 
 type FinalRecommendationCardProps = {
@@ -9,10 +9,12 @@ type FinalRecommendationCardProps = {
 };
 
 const roleLabels = {
-  balanced: "今日のバランス",
-  "qol-focus": "QOL重視",
-  "roi-focus": "ROI重視",
+  "best-fit": "総合的におすすめ",
+  easy: "近くて気軽",
+  special: "今しかできない体験",
 } as const;
+
+const effectIcons = { up: ArrowUp, steady: Minus, down: ArrowDown } as const;
 
 export function FinalRecommendationCard({ recommendation, active, onDetails, onChoose }: FinalRecommendationCardProps) {
   const { candidate } = recommendation;
@@ -31,10 +33,15 @@ export function FinalRecommendationCard({ recommendation, active, onDetails, onC
           <div><Coins size={17} /><strong>{candidate.cost === 0 ? "無料" : `${candidate.cost.toLocaleString("ja-JP")}円`}</strong><span>費用</span></div>
           <div><UsersRound size={17} /><strong>{candidate.crowdLabel}</strong><span>混雑</span></div>
         </div>
-        <div className="final-dual-impact" aria-label="My QOLとMy ROIの予測">
-          <div className="is-qol"><Heart size={17} /><span><small>My QOL</small><strong>{recommendation.qolLabel}</strong><em>{recommendation.qolReason}</em></span><b>{recommendation.predictedQol}</b></div>
-          <div className="is-roi"><Gauge size={17} /><span><small>My ROI</small><strong>{recommendation.roiLabel}</strong><em>{recommendation.roiReason}</em></span><b>{recommendation.predictedRoi}</b></div>
-        </div>
+        <section className="final-roi-evaluation" aria-label={`My ROI ${recommendation.predictedRoi}`}>
+          <div><Gauge size={18} /><span><small>My ROI</small><strong>{recommendation.predictedRoi}</strong></span><em>{recommendation.roiLabel}</em></div>
+          <p>{recommendation.roiReason}</p>
+          <small>得られる価値と、時間・費用・疲れのバランス</small>
+        </section>
+        <section className="final-qol-effects" aria-label="暮らしへの期待">
+          <h3><Heart size={15} />この選択で満たせそうなこと</h3>
+          <div>{recommendation.qolEffects.map((effect) => { const Icon = effectIcons[effect.direction]; return <span className={`effect-${effect.direction}`} key={effect.label}>{effect.label}<Icon size={13} /></span>; })}</div>
+        </section>
         <p className="final-plan-copy">{candidate.shortCopy}</p>
         <div className="final-reason-line"><span>なぜ？</span><p>{recommendation.reason}</p></div>
         {recommendation.learnedReason && <p className="final-learned-reason"><Sparkles size={14} />{recommendation.learnedReason}</p>}

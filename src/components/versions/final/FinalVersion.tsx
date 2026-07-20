@@ -3,6 +3,7 @@ import type { VersionKey } from "../../../config/versions";
 import { type FinalActionStatus, type FinalBurden, type FinalChoiceRecord, type FinalPriority, type FinalRevisitIntent, type FinalSatisfaction, type FinalState, type FinalTodayContext } from "../../../data/finalMockData";
 import { createChoiceRecord, createDemoFinalState, getFinalDashboardSummary, readFinalState, recommendFinalCandidates, resetFinalState, saveFinalState, type FinalRecommendation } from "../../../lib/finalRecommendation";
 import { FinalBottomNav, type FinalTab } from "./FinalBottomNav";
+import { FinalConceptIntro } from "./FinalConceptIntro";
 import { FinalHeader } from "./FinalHeader";
 import { FinalHistoryScreen } from "./FinalHistoryScreen";
 import { FinalHomeScreen } from "./FinalHomeScreen";
@@ -33,6 +34,7 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
   const [detail, setDetail] = useState<FinalRecommendation | null>(null);
   const [lastRecord, setLastRecord] = useState<FinalChoiceRecord | null>(null);
   const [toast, setToast] = useState("");
+  const [showConceptIntro, setShowConceptIntro] = useState(() => !state.hasSeenConceptIntro);
   const context = useMemo(() => createContext(prompt, priorities), [prompt, priorities]);
   const focused = ["priority", "loading", "results", "selected", "reflection", "learned", "settings"].includes(flow);
 
@@ -60,7 +62,12 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
     setState(demo);
     setPrompt(demo.lastPrompt);
     setPriorities(demo.lastPriorities);
+    setShowConceptIntro(true);
     setFlow("priority");
+  }
+  function closeConceptIntro() {
+    setShowConceptIntro(false);
+    setState((current) => ({ ...current, hasSeenConceptIntro: true }));
   }
   function updateStateWithRecord(record: FinalChoiceRecord) {
     const next = { ...state, history: [...state.history, record], lastPrompt: prompt, lastPriorities: priorities };
@@ -84,6 +91,7 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
     setPriorities([]);
     setRecommendations([]);
     setSelected(null);
+    setShowConceptIntro(true);
     setFlow("home");
   }
 
@@ -93,7 +101,7 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
   return (
     <div className="final-app">
       {flow !== "loading" && <FinalHeader currentVersion={currentVersion} onVersionChange={onVersionChange} onProfile={() => setFlow("settings")} onBack={flow === "priority" ? () => setFlow("home") : flow === "results" ? () => setFlow("priority") : undefined} />}
-      {flow === "home" && <FinalHomeScreen prompt={prompt} onPromptChange={setPrompt} historyCount={state.history.length} latestInsight={state.history[state.history.length - 1]?.qolInsight} wellbeing={wellbeing} onNext={startPriorities} onDemo={startDemo} />}
+      {flow === "home" && <FinalHomeScreen prompt={prompt} onPromptChange={setPrompt} historyCount={state.history.length} latestInsight={state.history[state.history.length - 1]?.qolInsight} wellbeing={wellbeing} onNext={startPriorities} onDemo={startDemo} onExplain={() => setShowConceptIntro(true)} />}
       {flow === "priority" && <FinalPriorityScreen selected={priorities} summary={prompt} onToggle={(priority) => setPriorities((current) => current.includes(priority) ? current.filter((item) => item !== priority) : current.length < 3 ? [...current, priority] : current)} onSubmit={() => setFlow("loading")} />}
       {flow === "loading" && <FinalLoadingScreen />}
       {flow === "results" && <FinalRecommendationsScreen recommendations={recommendations} contextSummary={summary} onDetails={setDetail} onChoose={(item) => { setSelected(item); setFlow("selected"); }} />}
@@ -104,6 +112,7 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
       {flow === "roi" && <FinalMyRoiScreen history={state.history} onSettings={() => setFlow("settings")} onHistory={() => setFlow("history")} />}
       {flow === "settings" && <FinalSettingsScreen profile={state.profile} onBack={() => setFlow("roi")} onReset={resetAll} onSave={(profile) => { setState((current) => ({ ...current, profile })); setToast("個人設定を保存しました"); setFlow("roi"); }} />}
       {detail && <FinalPlanSheet recommendation={detail} onClose={() => setDetail(null)} onChoose={() => { setSelected(detail); setDetail(null); setFlow("selected"); }} />}
+      {showConceptIntro && <FinalConceptIntro onClose={closeConceptIntro} />}
       {!focused && <FinalBottomNav active={navActive} onChange={navigate} />}
       {toast && <div className="final-toast" role="status" aria-live="polite">{toast}</div>}
     </div>
