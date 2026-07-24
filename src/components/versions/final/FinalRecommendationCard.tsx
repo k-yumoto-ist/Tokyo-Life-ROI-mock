@@ -1,8 +1,9 @@
-import { ArrowDown, ArrowRight, ArrowUp, Clock3, Coins, Gauge, Heart, MapPin, Minus, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, Award, Gauge, Heart, Info, Leaf, MapPin, Sparkles } from "lucide-react";
 import type { FinalRecommendation } from "../../../lib/finalRecommendation";
 
 type FinalRecommendationCardProps = {
   recommendation: FinalRecommendation;
+  currentQol: number;
   active: boolean;
   onDetails: () => void;
   onChoose: () => void;
@@ -14,40 +15,38 @@ const roleLabels = {
   special: "今しかできない体験",
 } as const;
 
-const effectIcons = { up: ArrowUp, steady: Minus, down: ArrowDown } as const;
-
-export function FinalRecommendationCard({ recommendation, active, onDetails, onChoose }: FinalRecommendationCardProps) {
+export function FinalRecommendationCard({ recommendation, currentQol, active, onDetails, onChoose }: FinalRecommendationCardProps) {
   const { candidate } = recommendation;
+  const positiveEffects = recommendation.qolEffects.filter((effect) => effect.direction === "up").slice(0, 2);
   return (
     <article className={`final-plan-card role-${recommendation.role} ${active ? "is-active" : ""}`}>
       <div className="final-plan-image">
         <img src={candidate.imageUrl} alt={candidate.imageAlt} loading="lazy" onError={(event) => { event.currentTarget.hidden = true; }} />
         <span><Sparkles size={14} />{roleLabels[recommendation.role]}</span>
+        <div className="final-plan-game-chips">
+          {candidate.scores.publicValue >= 70 && <button type="button" onClick={onDetails}><Leaf size={12} />東京都おすすめ</button>}
+          {candidate.cityPoint > 0 && <button type="button" onClick={onDetails}><Award size={12} />東京ポイント +{candidate.cityPoint}</button>}
+        </div>
       </div>
       <div className="final-plan-content">
-        <span className="final-plan-category">{candidate.category}</span>
-        <h2>{candidate.title}</h2>
-        <p className="final-plan-place"><MapPin size={15} />{candidate.place}</p>
-        <div className="final-plan-metrics">
-          <div><Clock3 size={17} /><strong>{candidate.travelMinutes}分</strong><span>移動</span></div>
-          <div><Coins size={17} /><strong>{candidate.cost === 0 ? "無料" : `${candidate.cost.toLocaleString("ja-JP")}円`}</strong><span>費用</span></div>
-          <div><UsersRound size={17} /><strong>{candidate.crowdLabel}</strong><span>混雑</span></div>
+        <div className="final-plan-title-row">
+          <div><span className="final-plan-category">{candidate.category}</span><h2>{candidate.title}</h2><p className="final-plan-place"><MapPin size={14} />{candidate.place}</p></div>
+          <button type="button" onClick={onDetails} aria-label="候補の詳細を見る"><Info size={18} /></button>
         </div>
-        <section className="final-roi-evaluation" aria-label={`My ROI ${recommendation.predictedRoi}`}>
-          <div><Gauge size={18} /><span><small>My ROI</small><strong>{recommendation.predictedRoi}</strong></span><em>{recommendation.roiLabel}</em></div>
-          <p>{recommendation.roiReason}</p>
-          <small>得られる価値と、時間・費用・疲れのバランス</small>
+        <p className="final-plan-ai-copy">{recommendation.reason}</p>
+        <section className="final-choice-indicators">
+          <div className="is-qol" aria-label={`最近のMy QOL ${currentQol}、期待 ${recommendation.predictedQol}`}>
+            <Heart size={17} /><span><small>My QOL</small><strong>{currentQol}<i>→</i>{recommendation.predictedQol}</strong></span><em>期待</em>
+          </div>
+          <div className="is-roi" aria-label={`My ROI ${recommendation.predictedRoi}`}>
+            <Gauge size={17} /><span><small>My ROI</small><strong>{recommendation.predictedRoi}</strong></span><em>{recommendation.roiLabel}</em>
+          </div>
         </section>
-        <section className="final-qol-effects" aria-label="暮らしへの期待">
-          <h3><Heart size={15} />この選択で満たせそうなこと</h3>
-          <div>{recommendation.qolEffects.map((effect) => { const Icon = effectIcons[effect.direction]; return <span className={`effect-${effect.direction}`} key={effect.label}>{effect.label}<Icon size={13} /></span>; })}</div>
-        </section>
-        <p className="final-plan-copy">{candidate.shortCopy}</p>
-        <div className="final-reason-line"><span>なぜ？</span><p>{recommendation.reason}</p></div>
-        {recommendation.learnedReason && <p className="final-learned-reason"><Sparkles size={14} />{recommendation.learnedReason}</p>}
+        <p className="final-plan-translation">{recommendation.roiReason}</p>
+        {positiveEffects.length > 0 && <div className="final-plan-qol-tags" aria-label="満たせそうなこと">{positiveEffects.map((effect) => <span key={effect.label}><Heart size={11} />{effect.label}</span>)}</div>}
         <div className="final-plan-actions">
-          <button className="final-text-button" onClick={onDetails}>詳しく見る</button>
-          <button className="final-primary-button" onClick={onChoose}>この案を選ぶ <ArrowRight size={17} /></button>
+          <button type="button" className="final-text-button" onClick={onDetails}>詳しく見る</button>
+          <button type="button" className="final-primary-button" onClick={onChoose}>この選択にする <ArrowRight size={17} /></button>
         </div>
       </div>
     </article>
