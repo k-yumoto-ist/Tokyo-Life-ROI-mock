@@ -6,9 +6,9 @@ type FinalConceptIntroProps = {
 
 export function FinalConceptIntro({ onClose }: FinalConceptIntroProps) {
   return (
-    <div className="final-concept-backdrop" role="presentation">
+    <div className="final-concept-backdrop">
       <section className="final-concept-dialog" role="dialog" aria-modal="true" aria-labelledby="final-concept-title">
-        <button className="final-concept-skip" onClick={onClose} aria-label="説明を閉じる"><X size={19} /></button>
+        <button type="button" className="final-concept-skip" onClick={onClose} aria-label="説明を閉じる"><X size={19} /></button>
         <span className="final-kicker">HOW IT WORKS</span>
         <h2 id="final-concept-title">今日の選択から、<br />自分らしい暮らしへ。</h2>
         <div className="final-concept-flow">
@@ -23,7 +23,7 @@ export function FinalConceptIntro({ onClose }: FinalConceptIntroProps) {
           </article>
         </div>
         <p>良い選択を重ねながら、あなたらしい暮らしを見つけます。</p>
-        <button className="final-primary-button" onClick={onClose}>使ってみる <ArrowRight size={17} /></button>
+        <button type="button" className="final-primary-button" onClick={onClose}>使ってみる <ArrowRight size={17} /></button>
       </section>
     </div>
   );

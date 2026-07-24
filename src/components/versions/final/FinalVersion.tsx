@@ -36,7 +36,7 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
   const [lastRecord, setLastRecord] = useState<FinalChoiceRecord | null>(null);
   const [settingsInitialSection, setSettingsInitialSection] = useState<FinalProfileSection | undefined>();
   const [toast, setToast] = useState("");
-  const [showConceptIntro, setShowConceptIntro] = useState(() => !state.hasSeenConceptIntro);
+  const [showConceptIntro, setShowConceptIntro] = useState(false);
   const context = useMemo(() => createContext(prompt, priorities), [prompt, priorities]);
   const focused = ["onboarding", "priority", "loading", "selected", "reflection", "learned", "settings"].includes(flow);
 
@@ -64,7 +64,7 @@ export function FinalVersion({ currentVersion, onVersionChange }: Props) {
     setState(demo);
     setPrompt(demo.lastPrompt);
     setPriorities(demo.lastPriorities);
-    setShowConceptIntro(true);
+    setShowConceptIntro(false);
     setFlow("loading");
   }
   function closeConceptIntro() {
